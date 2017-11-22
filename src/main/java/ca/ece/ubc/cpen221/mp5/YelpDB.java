@@ -12,12 +12,12 @@ import javax.json.*;
 
 public class YelpDB<T> implements MP5Db<T>{
 	
-	private Set<T> restaurants;
+	private Set<T> businesses;
 	private Set<T> reviews;
 	private Set<T> users;
 	
 	//Yelp DB Constructor
-	public YelpDB(String restaurants, String reviews, String user){
+	public YelpDB(String businesses, String reviews, String user){
 		
 	}
 	

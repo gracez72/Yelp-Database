@@ -33,7 +33,7 @@ public interface MP5Db<T> {
 	 *            represents a user_id in the database
 	 * @return a function that predicts the user's ratings for objects (of type
 	 *         T) in the database of type MP5Db<T>. The function that is
-	 *         returned takes two arguments: one is the database and other other
+	 *         returned takes two arguments: one is the database and other
 	 *         is a String that represents the id of an object of type T.
 	 */
 	ToDoubleBiFunction<MP5Db<T>, String> getPredictorFunction(String user);

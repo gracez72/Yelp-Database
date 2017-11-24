@@ -5,6 +5,10 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.ToDoubleBiFunction;
 
@@ -21,19 +25,76 @@ public class YelpDB<T> implements MP5Db<T>{
 		
 	}
 	
+	/**
+	 * Perform a structured query and return the set of objects that matches the
+	 * query
+	 * 
+	 * @param queryString
+	 * @return the set of objects that matches the query
+	 */
 	@Override
 	public Set<T> getMatches(String queryString) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+	/**
+	 * Cluster objects into k clusters using k-means clustering
+	 * 
+	 * @param k
+	 *            number of clusters to create (0 < k <= number of objects)
+	 * @return a String, in JSON format, that represents the clusters
+	 */
 	@Override
 	public String kMeansClusters_json(int k) {
-		//Given a set of x y coordinates
+		/*1. Given a set of restaurant objects, loop through set and set
+		 *   the first k restaurants to each be their own cluster.
+		 *		
+		 * This is hard :(
+		 */
+		List<HashSet<T>> clusters = new ArrayList<HashSet<T>> ();
+		
+		int tracker = 0;
+		ArrayList<T> centroids = new ArrayList<T> ();
+		for (T object: this.businesses) {
+			if (tracker == k)
+				break;
+	
+			centroids.add(object);
+			
+			tracker++;
+		}
+	
+		HashMap<T, T> clustering = new HashMap<T, T> ();
+		for (T object: this.businesses) {
+			double currentDistance = -1.0;
+			double minDistance = Math.sqrt(Math.pow(centroids.get(0).getX() - object.getX(),2) + Math.pow(centroids.get(0).getY() - object.getY(), 2));
+			T closest;
+			
+			for (T centers: centroids) {
+				if (object.equals(centers))
+					break;
+				currentDistance = Math.sqrt(Math.pow(centers.getX() - object.getX(),2) + Math.pow(centers.getY() - object.getY(), 2));
+				if (currentDistance < minDistance)
+					closest = centers;
+			}
+			
+			clustering.put(object, closest);	
+		}
+	
+		
 		return null;
 	}
-	
 
+	/**
+	 * 
+	 * @param user
+	 *            represents a user_id in the database
+	 * @return a function that predicts the user's ratings for objects (of type
+	 *         T) in the database of type MP5Db<T>. The function that is
+	 *         returned takes two arguments: one is the database and other
+	 *         is a String that represents the id of an object of type T.
+	 */
 	@Override
 	public ToDoubleBiFunction <MP5Db<T>, String> getPredictorFunction(String user) {
 		// TODO Auto-generated method stub

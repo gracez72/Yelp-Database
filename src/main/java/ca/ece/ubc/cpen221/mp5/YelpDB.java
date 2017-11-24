@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,17 +51,19 @@ public class YelpDB<T> implements MP5Db<T>{
 		/*1. Given a set of restaurant objects, loop through set and set
 		 *   the first k restaurants to each be their own cluster.
 		 *		
-		 * This is hard :(
+		 * 
 		 */
-		List<HashSet<T>> clusters = new ArrayList<HashSet<T>> ();
+		List<HashSet<T>> kMeansClusters = new ArrayList<HashSet<T>> ();
 		
 		int tracker = 0;
 		ArrayList<T> centroids = new ArrayList<T> ();
+		HashMap<T, ArrayList<Integer>> centroidCoord = new HashMap<T, ArrayList<Integer>> ();
 		for (T object: this.businesses) {
 			if (tracker == k)
 				break;
 	
 			centroids.add(object);
+			centroidCoord.put(object, Arrays.asList(object.getX(), object.getY()));
 			
 			tracker++;
 		}
@@ -68,13 +71,13 @@ public class YelpDB<T> implements MP5Db<T>{
 		HashMap<T, T> clustering = new HashMap<T, T> ();
 		for (T object: this.businesses) {
 			double currentDistance = -1.0;
-			double minDistance = Math.sqrt(Math.pow(centroids.get(0).getX() - object.getX(),2) + Math.pow(centroids.get(0).getY() - object.getY(), 2));
+			double minDistance = Math.pow(centroids.get(0).getX() - object.getX(),2) + Math.pow(centroids.get(0).getY() - object.getY(), 2);
 			T closest;
 			
 			for (T centers: centroids) {
 				if (object.equals(centers))
 					break;
-				currentDistance = Math.sqrt(Math.pow(centers.getX() - object.getX(),2) + Math.pow(centers.getY() - object.getY(), 2));
+				currentDistance = Math.pow(centers.getX() - object.getX(),2) + Math.pow(centers.getY() - object.getY(), 2);
 				if (currentDistance < minDistance)
 					closest = centers;
 			}
@@ -82,6 +85,23 @@ public class YelpDB<T> implements MP5Db<T>{
 			clustering.put(object, closest);	
 		}
 	
+		for (T centers: centroids) {
+			double xValue = centroidCoord.get(centers).get(0);
+			double yValue = centroidCoord.get(centers).get(1);
+			int counter = 1;
+			
+			for (T object: clustering.keySet()) {
+				if (clustering.get(object).equals(centers)) {
+					xValue += object.getX();
+					yValue += object.getY();
+					counter++;
+				}
+			}
+			
+			double meanX = xValue/counter;
+			double meanY = yValue/counter;
+		}
+		
 		
 		return null;
 	}

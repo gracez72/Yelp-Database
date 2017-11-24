@@ -1,14 +1,8 @@
 package ca.ece.ubc.cpen221.mp5;
 
-/**
- * Represents a Restaurant
- */
+public class Restaurant extends Business{
 
-public class Restaurant {
-		//Attributes: coordinates, name, rating, etc.
-	
-		public Restaurant() {
-			
-		}
-	
+	public Restaurant (String url, String name, String restaurant_id) {
+		super(url, name, restaurant_id);
+	}
 }

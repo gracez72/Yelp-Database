@@ -1,9 +1,15 @@
 package ca.ece.ubc.cpen221.mp5;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+
 public class User {
 	private String url;
 	private int review_count;
 	private String type;
+	private static final ArrayList<String> categories = new ArrayList<String>(Arrays.asList("funny", "useful", "cool"));
+	private HashMap<String, Integer> votes;
 	// votes 
 	private String user_id;
 	private String name;

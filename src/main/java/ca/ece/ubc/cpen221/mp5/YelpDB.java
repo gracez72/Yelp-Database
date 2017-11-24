@@ -22,8 +22,7 @@ public class YelpDB<T> implements MP5Db<T>{
 	private Set<T> users;
 	
 	//Yelp DB Constructor
-	public YelpDB(String businesses, String reviews, String user){
-		
+	public YelpDB(T[] businesses, T[] reviews, T[] users){
 	}
 	
 	/**

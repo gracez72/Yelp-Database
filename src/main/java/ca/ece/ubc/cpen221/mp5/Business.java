@@ -17,8 +17,8 @@ public class Business {
 		this.lattitude = lattitude;
 	}
 	
-	public double[] getCoordinates() {
-		double[] coordinates = new double[2];
+	public Double[] getCoordinates() {
+		Double[] coordinates = new Double[2];
 		coordinates[0] = lattitude;
 		coordinates[1] = longitude;
 		

@@ -178,7 +178,7 @@ public class YelpDB<T> implements MP5Db<T> {
 
 
 
-	// JSON Parser - implement concurrently?
+	// JSON Parser 
 	public void ParseJSON(String url, String objtype) throws IOException {
 		URL filename = new URL(url);
 		URLConnection fn = filename.openConnection();

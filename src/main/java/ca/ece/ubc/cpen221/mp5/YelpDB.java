@@ -13,12 +13,16 @@ import java.util.Set;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 
 import javax.json.*;
 
 public class YelpDB<T> implements MP5Db<T> {
 
-	private HashMap<String, User> userByID;
+	private HashMap<String, User> userbyID;
 	private HashMap<String, Business> businessbyID;
 	private HashMap<String, Review> reviewbyID;
 
@@ -26,16 +30,16 @@ public class YelpDB<T> implements MP5Db<T> {
 
 	public YelpDB(String businessFile, String userFile, String reviewFile) {
 		try {
-			ParseJSON(businessFile);
-			ParseJSON(userFile);
-			ParseJSON(reviewFile);
-			
+			ParseJSON(businessFile, "business");
+			ParseJSON(userFile, "user");
+			ParseJSON(reviewFile, "review");
+
 		} catch (IOException e) {
 			System.out.println("ERROR: filenames not found.");
 		}
 
 	}
-	
+
 	public HashMap<String, Business> getBusinessbyID() {
 		return this.businessbyID;
 	}
@@ -133,75 +137,85 @@ public class YelpDB<T> implements MP5Db<T> {
 	 */
 	@Override
 	public ToDoubleBiFunction<MP5Db<T>, String> getPredictorFunction(String user) {
-		// ASSUMPTIONS ABOUT REPRESENTATION:
-		// DB contains Map with user id as key and user as value
-		// User has a list of reviews
-		// review has a rating
-		// review has a restaurant
-		// DB contains Map with restaurant id and restaurant
-		// assumes Restaurants contains a integer "priciness"
 
-		// x represents restaurant price
-		// y represents users stars
-		ArrayList<String> reviewList = userByID.get(user).getReviewList();
+		ArrayList<String> reviewList = userbyID.get(user).getReviewList();
 		List<Integer> x = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
-				                             .map(review -> review.getBusinessID())
-				                             .map(business_id -> businessbyID.get(business_id).getPrice())
-				                             .collect(Collectors.toList());
-		
+				.map(review -> review.getBusinessID()).map(business_id -> businessbyID.get(business_id).getPrice())
+				.collect(Collectors.toList());
+
 		List<Integer> y = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
-				                             .map(review -> review.getStars()).collect(Collectors.toList());
-		
+				.map(review -> review.getStars()).collect(Collectors.toList());
 
 		double x_mean = x.stream().reduce(0, Integer::sum) / reviewList.stream().count();
-		double y_mean = y.stream().reduce(0, Integer::sum)/ reviewList.stream().count();
-		
-		double Sxx = x.stream().map(x_val -> Math.pow(x_val - x_mean,2))
-				               .reduce(0.0, Double::sum);
-		double Syy = y.stream().map(y_val -> Math.pow(y_val - y_mean, 2))
-				               .reduce(0.0, Double::sum);
-		
+		double y_mean = y.stream().reduce(0, Integer::sum) / reviewList.stream().count();
+
+		double Sxx = x.stream().map(x_val -> Math.pow(x_val - x_mean, 2)).reduce(0.0, Double::sum);
+		double Syy = y.stream().map(y_val -> Math.pow(y_val - y_mean, 2)).reduce(0.0, Double::sum);
+
 		double Sxy = 0;
-		
+
 		for (int i = 0; i < reviewList.stream().count(); i++) {
 			Sxy += (x.get(i) - x_mean) * (y.get(i) - y_mean);
 		}
-		
-		double b = Sxy/Sxx;
+
+		double b = Sxy / Sxx;
 		double a = y_mean - (b * x_mean);
 		double R2 = Math.pow(Sxy, 2) / (Sxx * Syy);
-		
-		ToDoubleBiFunction<MP5Db<T>, String> fnc = (db, business) -> (a + b * ((Business) db.getBusinessbyID().get(business)).getPrice());
+
+		ToDoubleBiFunction<MP5Db<T>, String> fnc = (db,
+				business) -> (a + b * ((Business) db.getBusinessbyID().get(business)).getPrice());
 		return fnc;
-	    
-		
+
 	}
 
+
+
 	// JSON Parser
-	public static void ParseJSON(String filename) throws IOException {
-		// TODO : Throw exception if nullPointerException?
-		// Store as attributes for each restaurant
-		BufferedReader br = new BufferedReader(new FileReader(
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rms0Ocy1zerHj7RBhp3zaupQEJgu8ks5aIiykwA%3D%3D"));
+	public void ParseJSON(String filename, String objtype) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(filename));
 		String line;
 		while ((line = br.readLine()) != null) {
 			JsonReader jr = Json.createReader(new StringReader(line));
 			JsonObject obj = jr.readObject();
 			jr.close();
 
-			System.out.println("Name " + obj.getString("name"));
-			System.out.println(
-					"Longitude and Latitude: " + obj.getJsonNumber("longitude") + "," + obj.getJsonNumber("latitude"));
-			System.out.println("Open? " + obj.getBoolean("open"));
-			System.out.println("Url: " + obj.getString("url") + "\n");
+			if (objtype.equals("user")) {
+
+				Type type = new TypeToken<HashMap<String, Integer>>() {}.getType();
+				HashMap<String, Integer> votes = new Gson().fromJson(obj.getJsonObject("votes").toString(), type);
+
+				userbyID.put(obj.getString("review_id"),
+						new User(obj.getString("name"), obj.getInt("review_count"), obj.getString("user_id"),
+								obj.getString("url"), obj.getJsonNumber("average_stars").doubleValue(),
+								obj.getString("type"), votes));
+
+			} else if (objtype.equals("review")) {
+				
+				Type type = new TypeToken<HashMap<String, Integer>>() {}.getType();
+				HashMap<String, Integer> votes = new Gson().fromJson(obj.getJsonObject("votes").toString(), type);
+
+				reviewbyID.put(obj.getString("review_id"),
+						new Review(obj.getString("business_id"), obj.getInt("stars"), obj.getString("review_id"),
+								obj.getString("type"), votes, obj.getString("text"), obj.getString("date"),
+								obj.getString("user_id")));
+
+				userbyID.get(obj.getString("user_id")).addReview(obj.getString("review_id"));
+				
+			} else {
+
+				businessbyID.put(obj.getString("business_id"), new Business(obj.getString("url"), obj.getString("name"),
+				                 obj.getString("business_id"),obj.getJsonNumber("longitude").doubleValue(), 
+				                 obj.getJsonNumber("latitude").doubleValue(), obj.getInt("price"), obj.getString("photo_url"),
+				                 obj.getInt("review_count"), new Gson().fromJson("schools", new TypeToken<ArrayList<String>>() {}.getType()), 
+				                 obj.getString("state"), obj.getString("full_address"), obj.getBoolean("open"),
+				                 new Gson().fromJson("neighborhoods", new TypeToken<ArrayList<String>>() {}.getType()),
+				                 obj.getString("city"), obj.getString("type"), new Gson().fromJson("categories", new TypeToken<ArrayList<String>>() {}.getType())));
+			}
+
 		}
 
 		br.close();
 
 	}
-	
-	//Review Parser
-	//Add each reviewId to User
-
 
 }

@@ -51,7 +51,7 @@ public class Business {
 	 */
 	public Business (String url, String name, String business_id, double longitude, double latitude, int price,
 			         String photo_url, int review_count, ArrayList<String> schools, String state, String full_address,
-			         boolean open, ArrayList<String> neighbourhoods, String city, String type) {
+			         boolean open, ArrayList<String> neighbourhoods, String city, String type, ArrayList<String> categories) {
 		this.url = url;
 		this.name = name;
 		this.business_id = business_id;
@@ -69,6 +69,7 @@ public class Business {
 		this.neighbourhoods = neighbourhoods;
 		this.city = city;
 		this.type = type;
+		this.categories = categories;
 		
 	}
 	

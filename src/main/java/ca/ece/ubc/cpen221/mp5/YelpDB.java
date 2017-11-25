@@ -3,9 +3,11 @@ package ca.ece.ubc.cpen221.mp5;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +19,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.net.URL;
+import java.net.URLConnection;
 
 import javax.json.*;
 
@@ -30,14 +34,18 @@ public class YelpDB<T> implements MP5Db<T> {
 
 	public YelpDB(String businessFile, String userFile, String reviewFile) {
 		try {
+			userbyID = new HashMap<String, User>();
+			businessbyID = new HashMap<String, Business>();
+			reviewbyID = new HashMap<String, Review>();
+			
 			ParseJSON(businessFile, "business");
 			ParseJSON(userFile, "user");
 			ParseJSON(reviewFile, "review");
-
+			
 		} catch (IOException e) {
 			System.out.println("ERROR: filenames not found.");
 		}
-
+		
 	}
 
 	public HashMap<String, Business> getBusinessbyID() {
@@ -170,9 +178,11 @@ public class YelpDB<T> implements MP5Db<T> {
 
 
 
-	// JSON Parser
-	public void ParseJSON(String filename, String objtype) throws IOException {
-		BufferedReader br = new BufferedReader(new FileReader(filename));
+	// JSON Parser - implement concurrently?
+	public void ParseJSON(String url, String objtype) throws IOException {
+		URL filename = new URL(url);
+		URLConnection fn = filename.openConnection();
+		BufferedReader br = new BufferedReader(new InputStreamReader(fn.getInputStream()));
 		String line;
 		while ((line = br.readLine()) != null) {
 			JsonReader jr = Json.createReader(new StringReader(line));
@@ -183,12 +193,11 @@ public class YelpDB<T> implements MP5Db<T> {
 
 				Type type = new TypeToken<HashMap<String, Integer>>() {}.getType();
 				HashMap<String, Integer> votes = new Gson().fromJson(obj.getJsonObject("votes").toString(), type);
-
-				userbyID.put(obj.getString("review_id"),
-						new User(obj.getString("name"), obj.getInt("review_count"), obj.getString("user_id"),
-								obj.getString("url"), obj.getJsonNumber("average_stars").doubleValue(),
-								obj.getString("type"), votes));
-
+				
+				userbyID.put(obj.getString("user_id"), new User(obj.getString("name"), obj.getInt("review_count"), obj.getString("user_id"),
+						obj.getString("url"), obj.getJsonNumber("average_stars").doubleValue(),
+						obj.getString("type"), votes));
+				
 			} else if (objtype.equals("review")) {
 				
 				Type type = new TypeToken<HashMap<String, Integer>>() {}.getType();
@@ -202,14 +211,15 @@ public class YelpDB<T> implements MP5Db<T> {
 				userbyID.get(obj.getString("user_id")).addReview(obj.getString("review_id"));
 				
 			} else {
-
-				businessbyID.put(obj.getString("business_id"), new Business(obj.getString("url"), obj.getString("name"),
+				
+				businessbyID.put(obj.getString("business_id"), 
+						         new Business(obj.getString("url"), obj.getString("name"),
 				                 obj.getString("business_id"),obj.getJsonNumber("longitude").doubleValue(), 
 				                 obj.getJsonNumber("latitude").doubleValue(), obj.getInt("price"), obj.getString("photo_url"),
-				                 obj.getInt("review_count"), new Gson().fromJson("schools", new TypeToken<ArrayList<String>>() {}.getType()), 
+				                 obj.getInt("review_count"), obj.getJsonArray("schools").stream().map(school -> school.toString()).collect(Collectors.toCollection(ArrayList::new)), 
 				                 obj.getString("state"), obj.getString("full_address"), obj.getBoolean("open"),
-				                 new Gson().fromJson("neighborhoods", new TypeToken<ArrayList<String>>() {}.getType()),
-				                 obj.getString("city"), obj.getString("type"), new Gson().fromJson("categories", new TypeToken<ArrayList<String>>() {}.getType())));
+				                 obj.getJsonArray("neighborhoods").stream().map(neighborhood -> neighborhood.toString()).collect(Collectors.toCollection(ArrayList::new)),
+				                 obj.getString("city"), obj.getString("type"), obj.getJsonArray("categories").stream().map(category -> category.toString()).collect(Collectors.toCollection(ArrayList::new))));
 			}
 
 		}

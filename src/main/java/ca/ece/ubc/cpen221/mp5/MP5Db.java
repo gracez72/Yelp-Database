@@ -39,5 +39,5 @@ public interface MP5Db<T> {
 	 */
 	ToDoubleBiFunction<MP5Db<T>, String> getPredictorFunction(String user);
 	
-	HashMap<String, T> getBusinessbyID();
+	HashMap<String, Business> getBusinessbyID();
 }

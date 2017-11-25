@@ -19,22 +19,24 @@ import javax.json.*;
 public class YelpDB<T> implements MP5Db<T> {
 
 	private HashMap<String, User> userByID;
-	private HashMap<String, T> businessbyID;
+	private HashMap<String, Business> businessbyID;
 	private HashMap<String, Review> reviewbyID;
 
 	// Yelp DB Constructor
+
 	public YelpDB(String businessFile, String userFile, String reviewFile) {
 		try {
+			ParseJSON(businessFile);
 			ParseJSON(userFile);
 			ParseJSON(reviewFile);
-			ParseJSON(businessFile);
+			
 		} catch (IOException e) {
 			System.out.println("ERROR: filenames not found.");
 		}
 
 	}
 	
-	public HashMap<String, T> getBusinessbyID() {
+	public HashMap<String, Business> getBusinessbyID() {
 		return this.businessbyID;
 	}
 
@@ -141,9 +143,15 @@ public class YelpDB<T> implements MP5Db<T> {
 
 		// x represents restaurant price
 		// y represents users stars
-		ArrayList<Review> reviewList = userByID.get(user).getReviewList();
-		List<Integer> x = reviewList.stream().map(review -> review.getRestaurant().getPrice()).collect(Collectors.toList());
-		List<Integer> y = reviewList.stream().map(review -> review.getStars()).collect(Collectors.toList());
+		ArrayList<String> reviewList = userByID.get(user).getReviewList();
+		List<Integer> x = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
+				                             .map(review -> review.getBusinessID())
+				                             .map(business_id -> businessbyID.get(business_id).getPrice())
+				                             .collect(Collectors.toList());
+		
+		List<Integer> y = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
+				                             .map(review -> review.getStars()).collect(Collectors.toList());
+		
 
 		double x_mean = x.stream().reduce(0, Integer::sum) / reviewList.stream().count();
 		double y_mean = y.stream().reduce(0, Integer::sum)/ reviewList.stream().count();
@@ -163,9 +171,10 @@ public class YelpDB<T> implements MP5Db<T> {
 		double a = y_mean - (b * x_mean);
 		double R2 = Math.pow(Sxy, 2) / (Sxx * Syy);
 		
-		ToDoubleBiFunction<MP5Db<T>, String> fnc = (db, restaurant) -> (a + b * ((Restaurant) db.getBusinessbyID().get(restaurant)).getPrice());
+		ToDoubleBiFunction<MP5Db<T>, String> fnc = (db, business) -> (a + b * ((Business) db.getBusinessbyID().get(business)).getPrice());
 		return fnc;
 	    
+		
 	}
 
 	// JSON Parser
@@ -173,7 +182,7 @@ public class YelpDB<T> implements MP5Db<T> {
 		// TODO : Throw exception if nullPointerException?
 		// Store as attributes for each restaurant
 		BufferedReader br = new BufferedReader(new FileReader(
-				"C:\\Users\\Grace\\eclipse-workspace\\f17-mp51-gracez72_andradazoltan\\data\\restaurants.json"));
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rms0Ocy1zerHj7RBhp3zaupQEJgu8ks5aIiykwA%3D%3D"));
 		String line;
 		while ((line = br.readLine()) != null) {
 			JsonReader jr = Json.createReader(new StringReader(line));
@@ -190,14 +199,9 @@ public class YelpDB<T> implements MP5Db<T> {
 		br.close();
 
 	}
+	
+	//Review Parser
+	//Add each reviewId to User
 
-	public static void main(String[] args) {
-		try {
-			ParseJSON("what");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 
 }

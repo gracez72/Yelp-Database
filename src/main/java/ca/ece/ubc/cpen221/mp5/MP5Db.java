@@ -1,5 +1,6 @@
 package ca.ece.ubc.cpen221.mp5;
 
+import java.util.HashMap;
 import java.util.Set;
 import java.util.function.ToDoubleBiFunction;;
 
@@ -37,5 +38,6 @@ public interface MP5Db<T> {
 	 *         is a String that represents the id of an object of type T.
 	 */
 	ToDoubleBiFunction<MP5Db<T>, String> getPredictorFunction(String user);
-
+	
+	HashMap<String, T> getBusinessbyID();
 }

@@ -29,12 +29,17 @@ public class Restaurant extends Business{
 	 * @param type of restaurant
 	 * 
 	 */
+	
+	 //Business (String url, String name, String business_id, double longitude, double latitude, int price,
+	 //        String photo_url, int review_count, ArrayList<String> schools, String state, String full_address,
+	 //        boolean open, ArrayList<String> neighbourhoods, String city, String type, ArrayList<String> categories)
+	 
 	public Restaurant (String url, String name, String business_id, double longitude, double latitude, int price,
 	         String photo_url, int review_count, ArrayList<String> schools, String state, String full_address,
 	         boolean open, ArrayList<String> neighbourhoods, String city, String type, ArrayList<String> categories) {
 		
 		super(url, name, business_id,longitude, latitude, price, photo_url,review_count, schools, state, full_address,
-		      open, neighbourhoods,  city,  type,  categories);
+		      open, neighbourhoods,  city, type, categories);
 	}
 
 }

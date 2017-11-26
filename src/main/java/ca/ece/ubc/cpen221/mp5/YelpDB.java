@@ -24,8 +24,9 @@ import java.net.URLConnection;
 
 import javax.json.*;
 
-public class YelpDB<T> implements MP5Db<T> {
 
+public class YelpDB<T> implements MP5Db<T>{
+	
 	private HashMap<String, User> userbyID;
 	private HashMap<String, Business> businessbyID;
 	private HashMap<String, Review> reviewbyID;
@@ -83,13 +84,41 @@ public class YelpDB<T> implements MP5Db<T> {
 		List<HashSet<T>> kMeansClusters = new ArrayList<HashSet<T>>();
 
 		int tracker = 0;
+<<<<<<< HEAD
+		ArrayList<Business> centroids = new ArrayList<Business> ();
+		HashMap<Business, ArrayList<Double>> centroidCoord = new HashMap<Business, ArrayList<Double>> ();
+		for (Business object: this.businesses) {
+=======
 		ArrayList<T> centroids = new ArrayList<T>();
 		HashMap<T, ArrayList<Integer>> centroidCoord = new HashMap<T, ArrayList<Integer>>();
+		}
 		for (T object : this.businesses) {
+>>>>>>> 1491a0f70990840535bc88ff2fb1565d83c2a3c9
 			if (tracker == k)
 				break;
 
 			centroids.add(object);
+<<<<<<< HEAD
+			ArrayList<Double> coordinates = new ArrayList<Double> ();
+			coordinates.add(object.getCoordinates()[0]);
+			coordinates.add(object.getCoordinates()[1]);
+			centroidCoord.put(object, coordinates);
+			
+			tracker++;
+		}
+	
+		HashMap<Business, Business> clustering = new HashMap<Business, Business> ();
+		for (Business object: this.businesses) {
+			double currentDistance = -1.0;
+			double minDistance = euclideanDistance(object.getCoordinates()[0], object.getCoordinates()[1], centroids.get(0).getCoordinates()[0], centroids.get(0).getCoordinates()[1]);
+			Business closest = null;
+		}
+			
+			for (Business centers: centroids) {
+				if (object.equals(centers))
+					break;
+				currentDistance = euclideanDistance(object.getCoordinates()[0], object.getCoordinates()[1], centers.getCoordinates()[0], centers.getCoordinates()[1]);
+=======
 			centroidCoord.put(object, Arrays.asList(object.getX(), object.getY()));
 
 			tracker++;
@@ -107,12 +136,22 @@ public class YelpDB<T> implements MP5Db<T> {
 					break;
 				currentDistance = Math.pow(centers.getX() - object.getX(), 2)
 						+ Math.pow(centers.getY() - object.getY(), 2);
+>>>>>>> 1491a0f70990840535bc88ff2fb1565d83c2a3c9
 				if (currentDistance < minDistance)
 					closest = centers;
 			}
 
 			clustering.put(object, closest);
 		}
+<<<<<<< HEAD
+	
+		for (Business centers: centroids) {
+			double xValue = centroidCoord.get(centers).get(0);
+			double yValue = centroidCoord.get(centers).get(1);
+			int counter = 1;
+			
+			for (Business object: clustering.keySet()) {
+=======
 
 		for (T centers : centroids) {
 			double xValue = centroidCoord.get(centers).get(0);
@@ -120,9 +159,10 @@ public class YelpDB<T> implements MP5Db<T> {
 			int counter = 1;
 
 			for (T object : clustering.keySet()) {
+>>>>>>> 1491a0f70990840535bc88ff2fb1565d83c2a3c9
 				if (clustering.get(object).equals(centers)) {
-					xValue += object.getX();
-					yValue += object.getY();
+					xValue += object.getCoordinates()[0];
+					yValue += object.getCoordinates()[1];
 					counter++;
 				}
 			}
@@ -130,8 +170,15 @@ public class YelpDB<T> implements MP5Db<T> {
 			double meanX = xValue / counter;
 			double meanY = yValue / counter;
 		}
+			}
+		}
 
 		return null;
+	}
+			
+	
+	private double euclideanDistance (double x1, double y1, double x2, double y2) {
+		return Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2);
 	}
 
 	/**

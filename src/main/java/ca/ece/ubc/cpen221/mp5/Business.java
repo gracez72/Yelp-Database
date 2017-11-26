@@ -73,6 +73,11 @@ public class Business {
 		
 	}
 	
+<<<<<<< HEAD
+	public Double[] getCoordinates() {
+		Double[] coordinates = new Double[2];
+		coordinates[0] = lattitude;
+=======
 
 	/**
 	 * Returns longitude and latitude of business.
@@ -84,6 +89,7 @@ public class Business {
 	public double[] getCoordinates() {
 		double[] coordinates = new double[2];
 		coordinates[0] = latitude;
+>>>>>>> 1491a0f70990840535bc88ff2fb1565d83c2a3c9
 		coordinates[1] = longitude;
 		
 		return coordinates;

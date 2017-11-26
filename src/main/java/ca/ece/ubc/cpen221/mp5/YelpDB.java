@@ -26,7 +26,7 @@ import javax.json.*;
 
 
 public class YelpDB<T> implements MP5Db<T>{
-	
+
 	private HashMap<String, User> userbyID;
 	private HashMap<String, Business> businessbyID;
 	private HashMap<String, Review> reviewbyID;
@@ -65,6 +65,7 @@ public class YelpDB<T> implements MP5Db<T>{
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
 
 	/**
 	 * Cluster objects into k clusters using k-means clustering
@@ -112,7 +113,10 @@ public class YelpDB<T> implements MP5Db<T>{
 			double currentDistance = -1.0;
 			double minDistance = euclideanDistance(object.getCoordinates()[0], object.getCoordinates()[1], centroids.get(0).getCoordinates()[0], centroids.get(0).getCoordinates()[1]);
 			Business closest = null;
+<<<<<<< HEAD
 		}
+=======
+>>>>>>> ab15d09f8ba779bc4fedb6b5e420d6f440e5904a
 			
 			for (Business centers: centroids) {
 				if (object.equals(centers))
@@ -175,7 +179,7 @@ public class YelpDB<T> implements MP5Db<T>{
 
 		return null;
 	}
-			
+
 	
 	private double euclideanDistance (double x1, double y1, double x2, double y2) {
 		return Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2);

@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
@@ -110,110 +111,120 @@ public class YelpDB<T> implements MP5Db<T> {
 	 */
 	@Override
 	public String kMeansClusters_json(int k) {
-		/*
-		 * 1. Given a set of restaurant objects, loop through set and set the first k
-		 * restaurants to each be their own cluster.
-		 * 
-		 * 
-		 */
-		List<HashSet<T>> kMeansClusters = new ArrayList<HashSet<T>>();
-
-		int tracker = 0;
-<<<<<<< HEAD
-		ArrayList<Business> centroids = new ArrayList<Business> ();
-		HashMap<Business, ArrayList<Double>> centroidCoord = new HashMap<Business, ArrayList<Double>> ();
-		for (Business object: this.businesses) {
-=======
-		ArrayList<T> centroids = new ArrayList<T>();
-		HashMap<T, ArrayList<Integer>> centroidCoord = new HashMap<T, ArrayList<Integer>>();
-		}
-		for (T object : this.businesses) {
->>>>>>> 1491a0f70990840535bc88ff2fb1565d83c2a3c9
-			if (tracker == k)
+		List<HashSet<Business>> kMeansClusters = new ArrayList<HashSet<Business>>();
+		
+		
+		ArrayList<Business> centroids = new ArrayList<Business>();
+		for (Entry<String, Business> someEntry: businessbyID.entrySet()) {
+			centroids.add(someEntry.getValue());
+			
+			if (centroids.size() == k)
 				break;
-
-			centroids.add(object);
-<<<<<<< HEAD
-			ArrayList<Double> coordinates = new ArrayList<Double> ();
-			coordinates.add(object.getCoordinates()[0]);
-			coordinates.add(object.getCoordinates()[1]);
-			centroidCoord.put(object, coordinates);
+		}
+		
+		
+		List<HashSet<Business>> tempClusters = new ArrayList<HashSet<Business>>();
+		
+		while (true) {
+			tempClusters = clustering(centroids); //make concurrent later
+			ArrayList<Business> newcentroids = new ArrayList<Business>();
 			
-			tracker++;
-		}
-	
-		HashMap<Business, Business> clustering = new HashMap<Business, Business> ();
-		for (Business object: this.businesses) {
-			double currentDistance = -1.0;
-			double minDistance = euclideanDistance(object.getCoordinates()[0], object.getCoordinates()[1], centroids.get(0).getCoordinates()[0], centroids.get(0).getCoordinates()[1]);
-			Business closest = null;
-<<<<<<< HEAD
-		}
-=======
->>>>>>> ab15d09f8ba779bc4fedb6b5e420d6f440e5904a
-			
-			for (Business centers: centroids) {
-				if (object.equals(centers))
-					break;
-				currentDistance = euclideanDistance(object.getCoordinates()[0], object.getCoordinates()[1], centers.getCoordinates()[0], centers.getCoordinates()[1]);
-=======
-			centroidCoord.put(object, Arrays.asList(object.getX(), object.getY()));
-
-			tracker++;
-		}
-
-		HashMap<T, T> clustering = new HashMap<T, T>();
-		for (T object : this.businesses) {
-			double currentDistance = -1.0;
-			double minDistance = Math.pow(centroids.get(0).getX() - object.getX(), 2)
-					+ Math.pow(centroids.get(0).getY() - object.getY(), 2);
-			T closest;
-
-			for (T centers : centroids) {
-				if (object.equals(centers))
-					break;
-				currentDistance = Math.pow(centers.getX() - object.getX(), 2)
-						+ Math.pow(centers.getY() - object.getY(), 2);
->>>>>>> 1491a0f70990840535bc88ff2fb1565d83c2a3c9
-				if (currentDistance < minDistance)
-					closest = centers;
-			}
-
-			clustering.put(object, closest);
-		}
-<<<<<<< HEAD
-	
-		for (Business centers: centroids) {
-			double xValue = centroidCoord.get(centers).get(0);
-			double yValue = centroidCoord.get(centers).get(1);
-			int counter = 1;
-			
-			for (Business object: clustering.keySet()) {
-=======
-
-		for (T centers : centroids) {
-			double xValue = centroidCoord.get(centers).get(0);
-			double yValue = centroidCoord.get(centers).get(1);
-			int counter = 1;
-
-			for (T object : clustering.keySet()) {
->>>>>>> 1491a0f70990840535bc88ff2fb1565d83c2a3c9
-				if (clustering.get(object).equals(centers)) {
+			for (Business centers: centroids) { //make concurrent later
+				double xValue = centers.getCoordinates()[0];
+				double yValue = centers.getCoordinates()[0];
+				int counter = 1;
+				
+				HashSet<Business> oneCluster = new HashSet<Business> ();
+				for(HashSet<Business> theCluster: tempClusters) {
+					if(theCluster.contains(centers))
+						oneCluster = theCluster;
+				}
+				
+				for (Business object: oneCluster) {
 					xValue += object.getCoordinates()[0];
 					yValue += object.getCoordinates()[1];
 					counter++;
 				}
-			}
 
-			double meanX = xValue / counter;
-			double meanY = yValue / counter;
-		}
+				double meanX = xValue / counter;
+				double meanY = yValue / counter;
+				
+				Business closest = null;
+				double currentDistance = -1.0;
+				double minDistance = euclideanDistance(meanX, meanY, xValue, yValue);
+				
+				for (Business object: oneCluster) {
+					currentDistance = euclideanDistance(meanX, meanY, object.getCoordinates()[0], object.getCoordinates()[1]);
+					
+					if(currentDistance < minDistance)
+						closest = object;
+				}
+				newcentroids.add(closest);
 			}
+			
+			if(centroids.equals(newcentroids))
+				break;
+			centroids = newcentroids;
 		}
-
-		return null;
+		
+		kMeansClusters = tempClusters;
+		String json = "";
+		int cluster = 0;
+		double weight = 1.0;
+		
+		for(HashSet<Business> oneCluster: kMeansClusters) {
+			for (Business object: oneCluster) {
+				json = json.concat("{\"x\": " + Double.toString(object.getCoordinates()[0]) + ", ");
+				json = json.concat("\"y\": " + Double.toString(object.getCoordinates()[1]) + ", ");
+				
+				json = json.concat("\"name\": " + object.getName() + ", ");
+				
+				json = json.concat("\"cluster\": " + Integer.toString(cluster) + ", ");
+				json = json.concat("\"weight\": " + Double.toString(weight) + "}, ");
+			}
+			cluster++;
+		}
+		return json;
 	}
-
+	
+	private ArrayList<HashSet<Business>> clustering (ArrayList<Business> centroids) {
+		HashMap<Business, Business> clustering = new HashMap<Business, Business> ();
+		ArrayList<HashSet<Business>> clusters = new ArrayList<HashSet<Business>>();
+		
+		for (Entry<String, Business> someEntry: businessbyID.entrySet()) { //clustering everything
+			Business current = someEntry.getValue();
+			
+			double currentDistance = -1.0;
+			double minDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1], centroids.get(0).getCoordinates()[0], centroids.get(0).getCoordinates()[1]);
+			Business closest = centroids.get(0);
+			
+			for (Business centers: centroids) {
+				if (current.equals(centers))
+					break;
+				currentDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1], centers.getCoordinates()[0], centers.getCoordinates()[1]);
+				
+				if (currentDistance < minDistance)
+					closest = centers;
+			}
+			
+			clustering.put(current, closest);
+		}
+		
+		for (Business centers: centroids) {
+			HashSet<Business> oneCluster = new HashSet<Business> ();
+			oneCluster.add(centers);
+			
+			for(Business someBusiness: clustering.keySet()) {
+				if(clustering.get(someBusiness).equals(centers))
+					oneCluster.add(someBusiness);
+			}
+			clusters.add(oneCluster);
+		}
+		
+		
+		return clusters;
+	}
+	
 	private double euclideanDistance(double x1, double y1, double x2, double y2) {
 		return Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
 	}

@@ -18,7 +18,7 @@ import java.net.Socket;
  * 
  * FORMAT FROM: FIBONACCISERVER EXAMPLE
  */
-public class DBServer {
+public class YelpDBServer {
 	/** Default port number where the server listens for connections. */
 	public static int DB_PORT;
 
@@ -33,7 +33,7 @@ public class DBServer {
 	 * @param port
 	 *            port number, requires 0 <= port <= 65535
 	 */
-	public DBServer(int port) throws IOException {
+	public YelpDBServer(int port) throws IOException {
 		serverSocket = new ServerSocket(port);
 		this.DB_PORT = port;
 	}

@@ -1,13 +1,10 @@
 package ca.ece.ubc.cpen221.mp5;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,9 +12,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.net.URL;
@@ -127,6 +122,7 @@ public class YelpDB<T> implements MP5Db<T> {
 		
 		while (true) {
 			tempClusters = clustering(centroids); //make concurrent later
+			
 			ArrayList<Business> newcentroids = new ArrayList<Business>();
 			
 			for (Business centers: centroids) { //make concurrent later

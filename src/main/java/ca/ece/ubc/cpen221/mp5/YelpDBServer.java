@@ -129,7 +129,7 @@ public class YelpDBServer {
 	 */
 	public static void main(String[] args) {
 		try {
-			DBServer server = new DBServer(4949);
+			YelpDBServer server = new YelpDBServer(4949);
 			server.serve();
 		} catch (IOException e) {
 			e.printStackTrace();

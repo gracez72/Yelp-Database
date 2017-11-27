@@ -24,8 +24,7 @@ import java.net.URLConnection;
 
 import javax.json.*;
 
-
-public class YelpDB<T> implements MP5Db<T>{
+public class YelpDB<T> implements MP5Db<T> {
 
 	private HashMap<String, User> userbyID;
 	private HashMap<String, Business> businessbyID;
@@ -38,15 +37,15 @@ public class YelpDB<T> implements MP5Db<T>{
 			userbyID = new HashMap<String, User>();
 			businessbyID = new HashMap<String, Business>();
 			reviewbyID = new HashMap<String, Review>();
-			
+
 			ParseJSON(businessFile, "business");
 			ParseJSON(userFile, "user");
 			ParseJSON(reviewFile, "review");
-			
+
 		} catch (IOException e) {
 			System.out.println("ERROR: filenames not found.");
 		}
-		
+
 	}
 
 	public HashMap<String, Business> getBusinessbyID() {
@@ -63,9 +62,44 @@ public class YelpDB<T> implements MP5Db<T>{
 	@Override
 	public Set<T> getMatches(String queryString) {
 		// TODO Auto-generated method stub
+
 		return null;
 	}
+
+	// Catch exception later and print "ERR: INVALID_RESTAURANT_STRING"
+	public JsonObject getRestaurant(String businessID) throws InvalidBusinessException {
+		JsonObject obj = Json.createObjectBuilder().build();
+
+		if (!businessbyID.containsKey(businessID))
+			throw new InvalidBusinessException();
+		else {
+			Business restaurant = businessbyID.get(businessID);
+			obj = Json.createObjectBuilder().add("open", restaurant.isOpen()).add("url", restaurant.getURL())
+					.add("longitude", restaurant.getCoordinates()[0])
+					.add("neighbourhoods", new Gson().toJson(restaurant.getNeighbourhoods()))
+					.add("business_id", restaurant.getBusinessID()).add("name", restaurant.getName())
+					.add("categories", new Gson().toJson(restaurant.getCategories()))
+					.add("state", restaurant.getState()).add("type", restaurant.getType())
+					.add("stars", restaurant.getStars()).add("city", restaurant.getCity())
+					.add("full_address", restaurant.getFullAddress()).add("review_count", restaurant.getReviewCount())
+					.add("photo_url", restaurant.getPhotoURL())
+					.add("schools", new Gson().toJson(restaurant.getSchools()))
+					.add("latitude", restaurant.getCoordinates()[1]).add("price", restaurant.getPrice()).build();
+		}
+
+		return obj;
+	}
 	
+	public JsonObject addUser(JsonObject in) throws InvalidUserException{
+		try {
+			String name = in.getString("name");
+			User user = new User(name, "http://www.yelp.com/" + name.hashCode(), name.hashCode() + name, "user");
+			return null;
+		} catch (NullPointerException | ClassCastException c) {
+			throw new InvalidUserException();
+		}
+		
+	}
 
 	/**
 	 * Cluster objects into k clusters using k-means clustering
@@ -180,9 +214,8 @@ public class YelpDB<T> implements MP5Db<T>{
 		return null;
 	}
 
-	
-	private double euclideanDistance (double x1, double y1, double x2, double y2) {
-		return Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2);
+	private double euclideanDistance(double x1, double y1, double x2, double y2) {
+		return Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
 	}
 
 	/**
@@ -227,9 +260,7 @@ public class YelpDB<T> implements MP5Db<T>{
 
 	}
 
-
-
-	// JSON Parser 
+	// JSON Parser
 	public void ParseJSON(String url, String objtype) throws IOException {
 		URL filename = new URL(url);
 		URLConnection fn = filename.openConnection();
@@ -242,16 +273,19 @@ public class YelpDB<T> implements MP5Db<T>{
 
 			if (objtype.equals("user")) {
 
-				Type type = new TypeToken<HashMap<String, Integer>>() {}.getType();
+				Type type = new TypeToken<HashMap<String, Integer>>() {
+				}.getType();
 				HashMap<String, Integer> votes = new Gson().fromJson(obj.getJsonObject("votes").toString(), type);
-				
-				userbyID.put(obj.getString("user_id"), new User(obj.getString("name"), obj.getInt("review_count"), obj.getString("user_id"),
-						obj.getString("url"), obj.getJsonNumber("average_stars").doubleValue(),
-						obj.getString("type"), votes));
-				
+
+				userbyID.put(obj.getString("user_id"),
+						new User(obj.getString("name"), obj.getInt("review_count"), obj.getString("user_id"),
+								obj.getString("url"), obj.getJsonNumber("average_stars").doubleValue(),
+								obj.getString("type"), votes));
+
 			} else if (objtype.equals("review")) {
-				
-				Type type = new TypeToken<HashMap<String, Integer>>() {}.getType();
+
+				Type type = new TypeToken<HashMap<String, Integer>>() {
+				}.getType();
 				HashMap<String, Integer> votes = new Gson().fromJson(obj.getJsonObject("votes").toString(), type);
 
 				reviewbyID.put(obj.getString("review_id"),
@@ -260,17 +294,21 @@ public class YelpDB<T> implements MP5Db<T>{
 								obj.getString("user_id")));
 
 				userbyID.get(obj.getString("user_id")).addReview(obj.getString("review_id"));
-				
+
 			} else {
-				
-				businessbyID.put(obj.getString("business_id"), 
-						         new Business(obj.getString("url"), obj.getString("name"),
-				                 obj.getString("business_id"),obj.getJsonNumber("longitude").doubleValue(), 
-				                 obj.getJsonNumber("latitude").doubleValue(), obj.getInt("price"), obj.getString("photo_url"),
-				                 obj.getInt("review_count"), obj.getJsonArray("schools").stream().map(school -> school.toString()).collect(Collectors.toCollection(ArrayList::new)), 
-				                 obj.getString("state"), obj.getString("full_address"), obj.getBoolean("open"),
-				                 obj.getJsonArray("neighborhoods").stream().map(neighborhood -> neighborhood.toString()).collect(Collectors.toCollection(ArrayList::new)),
-				                 obj.getString("city"), obj.getString("type"), obj.getJsonArray("categories").stream().map(category -> category.toString()).collect(Collectors.toCollection(ArrayList::new))));
+
+				businessbyID.put(obj.getString("business_id"), new Business(obj.getString("url"), obj.getString("name"),
+						obj.getString("business_id"), obj.getJsonNumber("longitude").doubleValue(),
+						obj.getJsonNumber("latitude").doubleValue(), obj.getInt("price"), obj.getString("photo_url"),
+						obj.getInt("review_count"),
+						obj.getJsonArray("schools").stream().map(school -> school.toString())
+								.collect(Collectors.toCollection(ArrayList::new)),
+						obj.getString("state"), obj.getString("full_address"), obj.getBoolean("open"),
+						obj.getJsonArray("neighborhoods").stream().map(neighborhood -> neighborhood.toString()).collect(
+								Collectors.toCollection(ArrayList::new)),
+						obj.getString("city"), obj.getString("type"), obj.getJsonArray("categories").stream()
+								.map(category -> category.toString()).collect(Collectors.toCollection(ArrayList::new)),
+						obj.getInt("stars")));
 			}
 
 		}

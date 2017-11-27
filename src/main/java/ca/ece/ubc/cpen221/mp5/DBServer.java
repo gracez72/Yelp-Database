@@ -104,6 +104,7 @@ public class DBServer {
 				             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
 				             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
 					db.getMatches(line);
+					
 					System.err.println("reply: " + line);
 					out.println(line);
 				} catch (NumberFormatException e) {
@@ -120,6 +121,8 @@ public class DBServer {
 			in.close();
 		}
 	}
+	
+
 
 	/**
 	 * Start a DBServer running on the default port.

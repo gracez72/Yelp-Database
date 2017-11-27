@@ -47,9 +47,6 @@ public class User {
 		this.reviewList = new ArrayList<String>();
 		
 		HashMap<String, Integer> votes = new HashMap<String, Integer>();
-		votes.put("funny", 0);
-		votes.put("useful", 0);
-		votes.put("cool", 0);
 		this.votes = votes;
 		
 	}

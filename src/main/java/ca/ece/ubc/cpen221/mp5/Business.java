@@ -18,6 +18,8 @@ public class Business {
 	private double latitude;
 	
 	private int price;
+	private int stars;
+	
 	private boolean open;
 	private ArrayList<String> neighbourhoods;
 	private String type;
@@ -51,7 +53,7 @@ public class Business {
 	 */
 	public Business (String url, String name, String business_id, double longitude, double latitude, int price,
 			         String photo_url, int review_count, ArrayList<String> schools, String state, String full_address,
-			         boolean open, ArrayList<String> neighbourhoods, String city, String type, ArrayList<String> categories) {
+			         boolean open, ArrayList<String> neighbourhoods, String city, String type, ArrayList<String> categories, int stars) {
 		this.url = url;
 		this.name = name;
 		this.business_id = business_id;
@@ -70,15 +72,9 @@ public class Business {
 		this.city = city;
 		this.type = type;
 		this.categories = categories;
-		
+		this.stars = stars;
 	}
 	
-<<<<<<< HEAD
-	public Double[] getCoordinates() {
-		Double[] coordinates = new Double[2];
-		coordinates[0] = lattitude;
-=======
-
 	/**
 	 * Returns longitude and latitude of business.
 	 * 
@@ -89,7 +85,6 @@ public class Business {
 	public double[] getCoordinates() {
 		double[] coordinates = new double[2];
 		coordinates[0] = latitude;
->>>>>>> 1491a0f70990840535bc88ff2fb1565d83c2a3c9
 		coordinates[1] = longitude;
 		
 		return coordinates;
@@ -111,5 +106,122 @@ public class Business {
 	 */
 	public String getName() {
 		return this.name;
+	}
+	
+	/**
+	 * Returns true if business is open, false otherwise.
+	 * 
+	 * @return open?
+	 */
+	public boolean isOpen() {
+		return this.open;
+	}
+	
+	/**
+	 * Returns url of business.
+	 * 
+	 * @return url
+	 */
+	public String getURL() {
+		return this.url;
+	}
+	
+	/**
+	 * Returns neighbourhoods of business.
+	 * 
+	 * @return neighbourhoods
+	 */
+	public ArrayList<String> getNeighbourhoods() {
+		return this.neighbourhoods;
+	}
+	
+	/**
+	 * Returns business id.
+	 * 
+	 * @return business id
+	 */
+	public String getBusinessID() {
+		return this.business_id;
+	}
+	
+	/**
+	 * Returns categories business falls under
+	 * 
+	 * @return categories
+	 */
+	public ArrayList<String> getCategories() {
+		return this.categories;
+	}
+	
+	/**
+	 * Returns state business is located in.
+	 * 
+	 * @return state
+	 */
+	public String getState() {
+		return this.state;
+	}
+	
+	/**
+	 * Returns type of business.
+	 * 
+	 * @return type
+	 */
+	public String getType() {
+		return this.type;
+	}
+	
+	/**
+	 * Returns address of business.
+	 * 
+	 * @return address
+	 */
+	public String getFullAddress() {
+		return this.full_address;
+	}
+	
+	/**
+	 * Returns review count of business.
+	 * 
+	 * @return review count
+	 */
+	public int getReviewCount() {
+		return this.review_count;
+	}
+	
+	/**
+	 * Returns photo url of business.
+	 * 
+	 * @return photo url
+	 */
+	public String getPhotoURL() {
+		return this.photo_url;
+	}
+	
+	/**
+	 * Returns city of business.
+	 * 
+	 * @return city
+	 */
+	public String getCity() {
+		return this.city;
+	}
+	
+	/**
+	 * Returns schools near business.
+	 * 
+	 * @return list of schools
+	 */
+	public ArrayList<String> getSchools() {
+		return this.schools;
+	}
+	
+	/**
+	 * Returns business' rating in stars.
+	 * 
+	 * @return stars
+	 */
+	public int getStars() {
+		return this.stars;
 	}
 }

@@ -3,7 +3,6 @@ package ca.ece.ubc.cpen221.mp5;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,14 +11,18 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
+
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLConnection;
 
-import javax.json.*;
+
 
 public class YelpDB<T> implements MP5Db<T> {
 
@@ -78,7 +81,7 @@ public class YelpDB<T> implements MP5Db<T> {
 
 	public String addUser(JsonObject in) throws InvalidUserException {
 		try {
-			String name = in.getString("name");
+			String name = in.get("name").getAsString();
 			User user = new User(name, "http://www.yelp.com/" + name.hashCode(), name.hashCode() + name, "user");
 			userbyID.put(name.hashCode() + name, user);
 			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
@@ -91,19 +94,18 @@ public class YelpDB<T> implements MP5Db<T> {
 
 	public String addRestaurant(JsonObject in) throws InvalidRestaurantException {
 		try {
-			String restaurant_name = in.getString("name");
-			Restaurant restaurant = new Restaurant(in.getString("url"), restaurant_name,
-					restaurant_name.hashCode() + restaurant_name, in.getJsonNumber("longitude").doubleValue(),
-					in.getJsonNumber("latitude").doubleValue(), in.getInt("price"), in.getString("photo_url"),
-					in.getInt("review_count"),
-					in.getJsonArray("schools").stream().map(school -> school.toString())
-							.collect(Collectors.toCollection(ArrayList::new)),
-					in.getString("state"), in.getString("full_address"), in.getBoolean("open"),
-					in.getJsonArray("neighborhoods").stream().map(neighbourhood -> neighbourhood.toString())
-							.collect(Collectors.toCollection(ArrayList::new)),
-					in.getString("city"), in.getString("type"), in.getJsonArray("categories").stream()
-							.map(category -> category.toString()).collect(Collectors.toCollection(ArrayList::new)),
-					in.getInt("stars"));
+			Type listType = new TypeToken<List<String>>() {}.getType();
+
+			String restaurant_name = in.get("name").getAsString();
+			Restaurant restaurant = new Restaurant(in.get("url").getAsString(), restaurant_name,
+					restaurant_name.hashCode() + restaurant_name, in.get("longitude").getAsDouble(),
+					in.get("latitude").getAsDouble(), in.get("price").getAsInt(), in.get("photo_url").getAsString(),
+					in.get("review_count").getAsInt(),
+					new Gson().fromJson(in.get("schools"), listType),
+					in.get("state").getAsString(), in.get("full_address").getAsString(), in.get("open").getAsBoolean(),
+					new Gson().fromJson(in.get("neighborhoods"), listType),
+					in.get("city").getAsString(), in.get("type").getAsString(), new Gson().fromJson(in.get("categories"), listType),
+					in.get("stars").getAsDouble());
 			businessbyID.put(restaurant_name.hashCode() + restaurant_name, restaurant);
 			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 			return gson.toJson(restaurant);
@@ -290,49 +292,23 @@ public class YelpDB<T> implements MP5Db<T> {
 		URLConnection fn = filename.openConnection();
 		BufferedReader br = new BufferedReader(new InputStreamReader(fn.getInputStream()));
 		String line;
+		
 		while ((line = br.readLine()) != null) {
-			JsonReader jr = Json.createReader(new StringReader(line));
-			JsonObject obj = jr.readObject();
-			jr.close();
-
+	        Gson gson = new Gson();
 			if (objtype.equals("user")) {
-
-				Type type = new TypeToken<HashMap<String, Integer>>() {
-				}.getType();
-				HashMap<String, Integer> votes = new Gson().fromJson(obj.getJsonObject("votes").toString(), type);
-
-				userbyID.put(obj.getString("user_id"),
-						new User(obj.getString("name"), obj.getInt("review_count"), obj.getString("user_id"),
-								obj.getString("url"), obj.getJsonNumber("average_stars").doubleValue(),
-								obj.getString("type"), votes));
+				
+				User user = gson.fromJson(line, User.class);
+				userbyID.put(user.getUserID(), user);
 
 			} else if (objtype.equals("review")) {
 
-				Type type = new TypeToken<HashMap<String, Integer>>() {
-				}.getType();
-				HashMap<String, Integer> votes = new Gson().fromJson(obj.getJsonObject("votes").toString(), type);
-
-				reviewbyID.put(obj.getString("review_id"),
-						new Review(obj.getString("business_id"), obj.getInt("stars"), obj.getString("review_id"),
-								obj.getString("type"), votes, obj.getString("text"), obj.getString("date"),
-								obj.getString("user_id")));
-
-				userbyID.get(obj.getString("user_id")).addReview(obj.getString("review_id"));
+				Review review = gson.fromJson(line, Review.class);
+				reviewbyID.put(review.getReviewID(), review);
+				userbyID.get(review.getUserID()).addReview(review.getReviewID());
 
 			} else {
-
-				businessbyID.put(obj.getString("business_id"), new Business(obj.getString("url"), obj.getString("name"),
-						obj.getString("business_id"), obj.getJsonNumber("longitude").doubleValue(),
-						obj.getJsonNumber("latitude").doubleValue(), obj.getInt("price"), obj.getString("photo_url"),
-						obj.getInt("review_count"),
-						obj.getJsonArray("schools").stream().map(school -> school.toString())
-								.collect(Collectors.toCollection(ArrayList::new)),
-						obj.getString("state"), obj.getString("full_address"), obj.getBoolean("open"),
-						obj.getJsonArray("neighborhoods").stream().map(neighborhood -> neighborhood.toString()).collect(
-								Collectors.toCollection(ArrayList::new)),
-						obj.getString("city"), obj.getString("type"), obj.getJsonArray("categories").stream()
-								.map(category -> category.toString()).collect(Collectors.toCollection(ArrayList::new)),
-						obj.getInt("stars")));
+				Business restaurant = gson.fromJson(line, Business.class);
+				businessbyID.put(restaurant.getBusinessID(), restaurant);
 			}
 
 		}

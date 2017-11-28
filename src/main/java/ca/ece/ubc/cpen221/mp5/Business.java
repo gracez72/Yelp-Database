@@ -23,7 +23,7 @@ public class Business {
 	@Expose
 	private int price;
 	@Expose
-	private int stars;
+	private double stars;
 	@Expose
 	private boolean open;
 	@Expose
@@ -67,7 +67,7 @@ public class Business {
 	 */
 	public Business (String url, String name, String business_id, double longitude, double latitude, int price,
 			         String photo_url, int review_count, ArrayList<String> schools, String state, String full_address,
-			         boolean open, ArrayList<String> neighbourhoods, String city, String type, ArrayList<String> categories, int stars) {
+			         boolean open, ArrayList<String> neighbourhoods, String city, String type, ArrayList<String> categories, double stars) {
 		this.url = url;
 		this.name = name;
 		this.business_id = business_id;
@@ -235,7 +235,7 @@ public class Business {
 	 * 
 	 * @return stars
 	 */
-	public int getStars() {
+	public double getStars() {
 		return this.stars;
 	}
 }

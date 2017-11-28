@@ -25,7 +25,7 @@ public class User {
 	@Expose
 	private HashMap<String, Integer> votes;
 	@Expose
-	private final String user_id;
+	private String user_id;
 	@Expose
 	private String name;
 	@Expose
@@ -60,7 +60,12 @@ public class User {
 		this.votes = votes;
 		
 	}
-
+	public User() {
+		this.reviewList = new ArrayList<String>();
+		HashMap<String, Integer> votes = new HashMap<String, Integer>();
+		this.votes = votes;
+	}
+	
 	/**
 	 * User constructor that initializes an existing User.
 	 * 

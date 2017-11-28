@@ -2,33 +2,47 @@ package ca.ece.ubc.cpen221.mp5;
 
 import java.util.ArrayList;
 
+import com.google.gson.annotations.Expose;
+
 /**
  * Business - a datatype that represents a business.
  *
  */
 
 public class Business {
-	
+	@Expose
 	private String url;
+	@Expose
 	private String name;
-	
+	@Expose
 	private final String business_id;
-	
+	@Expose
 	private double longitude;
+	@Expose
 	private double latitude;
-	
+	@Expose
 	private int price;
+	@Expose
 	private int stars;
-	
+	@Expose
 	private boolean open;
+	@Expose
 	private ArrayList<String> neighbourhoods;
+	@Expose
 	private String type;
+	@Expose
 	private String state;
+	@Expose
 	private String city;
+	@Expose
 	private String full_address;
+	@Expose
 	private String photo_url;
+	@Expose
 	private ArrayList<String> schools;
+	@Expose
 	private int review_count;
+	@Expose
 	private ArrayList<String> categories;
 	
 	/**

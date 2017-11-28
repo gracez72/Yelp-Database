@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.net.URL;
@@ -63,39 +64,55 @@ public class YelpDB<T> implements MP5Db<T> {
 	}
 
 	// Catch exception later and print "ERR: INVALID_RESTAURANT_STRING"
-	public JsonObject getRestaurant(String businessID) throws InvalidBusinessException {
-		JsonObject obj = Json.createObjectBuilder().build();
+	public String getRestaurant(String businessID) throws InvalidBusinessException {
 
 		if (!businessbyID.containsKey(businessID))
-			throw new InvalidBusinessException();
+			return "ERR: INVALID_RESTAURANT_STRING";
 		else {
 			Business restaurant = businessbyID.get(businessID);
-			obj = Json.createObjectBuilder().add("open", restaurant.isOpen()).add("url", restaurant.getURL())
-					.add("longitude", restaurant.getCoordinates()[0])
-					.add("neighbourhoods", new Gson().toJson(restaurant.getNeighbourhoods()))
-					.add("business_id", restaurant.getBusinessID()).add("name", restaurant.getName())
-					.add("categories", new Gson().toJson(restaurant.getCategories()))
-					.add("state", restaurant.getState()).add("type", restaurant.getType())
-					.add("stars", restaurant.getStars()).add("city", restaurant.getCity())
-					.add("full_address", restaurant.getFullAddress()).add("review_count", restaurant.getReviewCount())
-					.add("photo_url", restaurant.getPhotoURL())
-					.add("schools", new Gson().toJson(restaurant.getSchools()))
-					.add("latitude", restaurant.getCoordinates()[1]).add("price", restaurant.getPrice()).build();
+			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+			return gson.toJson(restaurant);
 		}
 
-		return obj;
 	}
-	
-	public JsonObject addUser(JsonObject in) throws InvalidUserException{
+
+	public String addUser(JsonObject in) throws InvalidUserException {
 		try {
 			String name = in.getString("name");
 			User user = new User(name, "http://www.yelp.com/" + name.hashCode(), name.hashCode() + name, "user");
-			return null;
+			userbyID.put(name.hashCode() + name, user);
+			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+			return gson.toJson(user);
 		} catch (NullPointerException | ClassCastException c) {
-			throw new InvalidUserException();
+			return "ERR: NO_SUCH_USER";
 		}
-		
+
 	}
+
+	public String addRestaurant(JsonObject in) throws InvalidRestaurantException {
+		try {
+			String restaurant_name = in.getString("name");
+			Restaurant restaurant = new Restaurant(in.getString("url"), restaurant_name,
+					restaurant_name.hashCode() + restaurant_name, in.getJsonNumber("longitude").doubleValue(),
+					in.getJsonNumber("latitude").doubleValue(), in.getInt("price"), in.getString("photo_url"),
+					in.getInt("review_count"),
+					in.getJsonArray("schools").stream().map(school -> school.toString())
+							.collect(Collectors.toCollection(ArrayList::new)),
+					in.getString("state"), in.getString("full_address"), in.getBoolean("open"),
+					in.getJsonArray("neighborhoods").stream().map(neighbourhood -> neighbourhood.toString())
+							.collect(Collectors.toCollection(ArrayList::new)),
+					in.getString("city"), in.getString("type"), in.getJsonArray("categories").stream()
+							.map(category -> category.toString()).collect(Collectors.toCollection(ArrayList::new)),
+					in.getInt("stars"));
+			businessbyID.put(restaurant_name.hashCode() + restaurant_name, restaurant);
+			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+			return gson.toJson(restaurant);
+		} catch (NullPointerException | ClassCastException c) {
+			return "ERR: NO_SUCH_RESTAURANT";
+		}
+
+	}
+
 
 	/**
 	 * Cluster objects into k clusters using k-means clustering
@@ -107,36 +124,34 @@ public class YelpDB<T> implements MP5Db<T> {
 	@Override
 	public String kMeansClusters_json(int k) {
 		List<HashSet<Business>> kMeansClusters = new ArrayList<HashSet<Business>>();
-		
-		
+
 		ArrayList<Business> centroids = new ArrayList<Business>();
-		for (Entry<String, Business> someEntry: businessbyID.entrySet()) {
+		for (Entry<String, Business> someEntry : businessbyID.entrySet()) {
 			centroids.add(someEntry.getValue());
-			
+
 			if (centroids.size() == k)
 				break;
 		}
-		
-		
+
 		List<HashSet<Business>> tempClusters = new ArrayList<HashSet<Business>>();
-		
+
 		while (true) {
-			tempClusters = clustering(centroids); //make concurrent later
-			
+			tempClusters = clustering(centroids); // make concurrent later
+
 			ArrayList<Business> newcentroids = new ArrayList<Business>();
-			
-			for (Business centers: centroids) { //make concurrent later
+
+			for (Business centers : centroids) { // make concurrent later
 				double xValue = centers.getCoordinates()[0];
 				double yValue = centers.getCoordinates()[0];
 				int counter = 1;
-				
-				HashSet<Business> oneCluster = new HashSet<Business> ();
-				for(HashSet<Business> theCluster: tempClusters) {
-					if(theCluster.contains(centers))
+
+				HashSet<Business> oneCluster = new HashSet<Business>();
+				for (HashSet<Business> theCluster : tempClusters) {
+					if (theCluster.contains(centers))
 						oneCluster = theCluster;
 				}
-				
-				for (Business object: oneCluster) {
+
+				for (Business object : oneCluster) {
 					xValue += object.getCoordinates()[0];
 					yValue += object.getCoordinates()[1];
 					counter++;
@@ -144,37 +159,38 @@ public class YelpDB<T> implements MP5Db<T> {
 
 				double meanX = xValue / counter;
 				double meanY = yValue / counter;
-				
+
 				Business closest = null;
 				double currentDistance = -1.0;
 				double minDistance = euclideanDistance(meanX, meanY, xValue, yValue);
-				
-				for (Business object: oneCluster) {
-					currentDistance = euclideanDistance(meanX, meanY, object.getCoordinates()[0], object.getCoordinates()[1]);
-					
-					if(currentDistance < minDistance)
+
+				for (Business object : oneCluster) {
+					currentDistance = euclideanDistance(meanX, meanY, object.getCoordinates()[0],
+							object.getCoordinates()[1]);
+
+					if (currentDistance < minDistance)
 						closest = object;
 				}
 				newcentroids.add(closest);
 			}
-			
-			if(centroids.equals(newcentroids))
+
+			if (centroids.equals(newcentroids))
 				break;
 			centroids = newcentroids;
 		}
-		
+
 		kMeansClusters = tempClusters;
 		String json = "";
 		int cluster = 0;
 		double weight = 1.0;
-		
-		for(HashSet<Business> oneCluster: kMeansClusters) {
-			for (Business object: oneCluster) {
+
+		for (HashSet<Business> oneCluster : kMeansClusters) {
+			for (Business object : oneCluster) {
 				json = json.concat("{\"x\": " + Double.toString(object.getCoordinates()[0]) + ", ");
 				json = json.concat("\"y\": " + Double.toString(object.getCoordinates()[1]) + ", ");
-				
+
 				json = json.concat("\"name\": " + object.getName() + ", ");
-				
+
 				json = json.concat("\"cluster\": " + Integer.toString(cluster) + ", ");
 				json = json.concat("\"weight\": " + Double.toString(weight) + "}, ");
 			}
@@ -182,45 +198,46 @@ public class YelpDB<T> implements MP5Db<T> {
 		}
 		return json;
 	}
-	
-	private ArrayList<HashSet<Business>> clustering (ArrayList<Business> centroids) {
-		HashMap<Business, Business> clustering = new HashMap<Business, Business> ();
+
+	private ArrayList<HashSet<Business>> clustering(ArrayList<Business> centroids) {
+		HashMap<Business, Business> clustering = new HashMap<Business, Business>();
 		ArrayList<HashSet<Business>> clusters = new ArrayList<HashSet<Business>>();
-		
-		for (Entry<String, Business> someEntry: businessbyID.entrySet()) { //clustering everything
+
+		for (Entry<String, Business> someEntry : businessbyID.entrySet()) { // clustering everything
 			Business current = someEntry.getValue();
-			
+
 			double currentDistance = -1.0;
-			double minDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1], centroids.get(0).getCoordinates()[0], centroids.get(0).getCoordinates()[1]);
+			double minDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1],
+					centroids.get(0).getCoordinates()[0], centroids.get(0).getCoordinates()[1]);
 			Business closest = centroids.get(0);
-			
-			for (Business centers: centroids) {
+
+			for (Business centers : centroids) {
 				if (current.equals(centers))
 					break;
-				currentDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1], centers.getCoordinates()[0], centers.getCoordinates()[1]);
-				
+				currentDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1],
+						centers.getCoordinates()[0], centers.getCoordinates()[1]);
+
 				if (currentDistance < minDistance)
 					closest = centers;
 			}
-			
+
 			clustering.put(current, closest);
 		}
-		
-		for (Business centers: centroids) {
-			HashSet<Business> oneCluster = new HashSet<Business> ();
+
+		for (Business centers : centroids) {
+			HashSet<Business> oneCluster = new HashSet<Business>();
 			oneCluster.add(centers);
-			
-			for(Business someBusiness: clustering.keySet()) {
-				if(clustering.get(someBusiness).equals(centers))
+
+			for (Business someBusiness : clustering.keySet()) {
+				if (clustering.get(someBusiness).equals(centers))
 					oneCluster.add(someBusiness);
 			}
 			clusters.add(oneCluster);
 		}
-		
-		
+
 		return clusters;
 	}
-	
+
 	private double euclideanDistance(double x1, double y1, double x2, double y2) {
 		return Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
 	}

@@ -5,7 +5,6 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,13 +14,18 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
+
+
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLConnection;
 
-import javax.json.*;
+
 
 public class YelpDB<T> implements MP5Db<T> {
 
@@ -66,39 +70,42 @@ public class YelpDB<T> implements MP5Db<T> {
 	}
 
 	// Catch exception later and print "ERR: INVALID_RESTAURANT_STRING"
-	public JsonObject getRestaurant(String businessID) throws InvalidBusinessException {
-		JsonObject obj = Json.createObjectBuilder().build();
+	public String getRestaurant(String businessID) {
 
 		if (!businessbyID.containsKey(businessID))
-			throw new InvalidBusinessException();
+			return "ERR: INVALID_RESTAURANT_STRING";
 		else {
 			Business restaurant = businessbyID.get(businessID);
-			obj = Json.createObjectBuilder().add("open", restaurant.isOpen()).add("url", restaurant.getURL())
-					.add("longitude", restaurant.getCoordinates()[0])
-					.add("neighbourhoods", new Gson().toJson(restaurant.getNeighbourhoods()))
-					.add("business_id", restaurant.getBusinessID()).add("name", restaurant.getName())
-					.add("categories", new Gson().toJson(restaurant.getCategories()))
-					.add("state", restaurant.getState()).add("type", restaurant.getType())
-					.add("stars", restaurant.getStars()).add("city", restaurant.getCity())
-					.add("full_address", restaurant.getFullAddress()).add("review_count", restaurant.getReviewCount())
-					.add("photo_url", restaurant.getPhotoURL())
-					.add("schools", new Gson().toJson(restaurant.getSchools()))
-					.add("latitude", restaurant.getCoordinates()[1]).add("price", restaurant.getPrice()).build();
+			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+			return gson.toJson(restaurant);
 		}
 
-		return obj;
 	}
-	
-	public JsonObject addUser(JsonObject in) throws InvalidUserException{
+
+	public String addUser(String line) throws InvalidUserException {
 		try {
-			String name = in.getString("name");
-			User user = new User(name, "http://www.yelp.com/" + name.hashCode(), name.hashCode() + name, "user");
-			return null;
+			Gson gson = new Gson();
+			User user = gson.fromJson(line, User.class);
+			userbyID.put(user.getUserID(), user);
+			return gson.toJson(user);
 		} catch (NullPointerException | ClassCastException c) {
-			throw new InvalidUserException();
+			return "ERR: NO_SUCH_USER";
 		}
-		
+
 	}
+
+	public String addRestaurant(String line) {
+		try {
+			Gson gson = new Gson();
+			Restaurant restaurant = gson.fromJson(line, Restaurant.class);
+			businessbyID.put(restaurant.getBusinessID(), restaurant);
+			return gson.toJson(restaurant);
+		} catch (NullPointerException | ClassCastException c) {
+			return "ERR: NO_SUCH_RESTAURANT";
+		}
+
+	}
+
 
 	/**
 	 * Cluster objects into k clusters using k-means clustering
@@ -111,6 +118,7 @@ public class YelpDB<T> implements MP5Db<T> {
 	@Override
 	public String kMeansClusters_json(int k) {
 		List<HashSet<Business>> kMeansClusters = new ArrayList<HashSet<Business>>();
+<<<<<<< HEAD
 		boolean one = true;
 		
 		double minX = Double.MAX_VALUE;
@@ -161,6 +169,34 @@ public class YelpDB<T> implements MP5Db<T> {
 				double xValue = 0;
 				double yValue = 0;
 				int counter = 0;
+=======
+
+		ArrayList<Business> centroids = new ArrayList<Business>();
+		for (Entry<String, Business> someEntry : businessbyID.entrySet()) {
+			centroids.add(someEntry.getValue());
+
+			if (centroids.size() == k)
+				break;
+		}
+
+		List<HashSet<Business>> tempClusters = new ArrayList<HashSet<Business>>();
+
+		while (true) {
+			tempClusters = clustering(centroids); // make concurrent later
+
+			ArrayList<Business> newcentroids = new ArrayList<Business>();
+
+			for (Business centers : centroids) { // make concurrent later
+				double xValue = centers.getCoordinates()[0];
+				double yValue = centers.getCoordinates()[0];
+				int counter = 1;
+
+				HashSet<Business> oneCluster = new HashSet<Business>();
+				for (HashSet<Business> theCluster : tempClusters) {
+					if (theCluster.contains(centers))
+						oneCluster = theCluster;
+				}
+>>>>>>> 3198e0a86751bb9d3cc40ae02c42c80bfbdb75e0
 
 				for (Business object : oneCluster) {
 					xValue += object.getCoordinates()[0];
@@ -171,16 +207,38 @@ public class YelpDB<T> implements MP5Db<T> {
 				newCenter[0] = xValue / counter;
 				newCenter[1] = yValue / counter;
 
+<<<<<<< HEAD
 				newcentroids.add(newCenter);
 			}
 			
 			if(!one & kMeansClusters.equals(tempClusters))
+=======
+				double meanX = xValue / counter;
+				double meanY = yValue / counter;
+
+				Business closest = null;
+				double currentDistance = -1.0;
+				double minDistance = euclideanDistance(meanX, meanY, xValue, yValue);
+
+				for (Business object : oneCluster) {
+					currentDistance = euclideanDistance(meanX, meanY, object.getCoordinates()[0],
+							object.getCoordinates()[1]);
+
+					if (currentDistance < minDistance)
+						closest = object;
+				}
+				newcentroids.add(closest);
+			}
+
+			if (centroids.equals(newcentroids))
+>>>>>>> 3198e0a86751bb9d3cc40ae02c42c80bfbdb75e0
 				break;
 			
 			kMeansClusters.clear();
 			kMeansClusters = tempClusters;
 		}
 
+<<<<<<< HEAD
 		String json = "[";
 		int cluster = 0;
 		double weight = 5.0;
@@ -192,6 +250,20 @@ public class YelpDB<T> implements MP5Db<T> {
 				
 				json = json.concat("\"name\": \"" + object.getName() + "\", ");
 				
+=======
+		kMeansClusters = tempClusters;
+		String json = "";
+		int cluster = 0;
+		double weight = 1.0;
+
+		for (HashSet<Business> oneCluster : kMeansClusters) {
+			for (Business object : oneCluster) {
+				json = json.concat("{\"x\": " + Double.toString(object.getCoordinates()[0]) + ", ");
+				json = json.concat("\"y\": " + Double.toString(object.getCoordinates()[1]) + ", ");
+
+				json = json.concat("\"name\": " + object.getName() + ", ");
+
+>>>>>>> 3198e0a86751bb9d3cc40ae02c42c80bfbdb75e0
 				json = json.concat("\"cluster\": " + Integer.toString(cluster) + ", ");
 				json = json.concat("\"weight\": " + Double.toString(weight) + "}, ");
 			}
@@ -210,6 +282,7 @@ public class YelpDB<T> implements MP5Db<T> {
 		
 		return json;
 	}
+<<<<<<< HEAD
 	
 	private ArrayList<HashSet<Business>> clustering (ArrayList<double[]> centroids) {
 		ArrayList<HashSet<Business>> clusters = new ArrayList<HashSet<Business>>();
@@ -218,9 +291,18 @@ public class YelpDB<T> implements MP5Db<T> {
 		}
 		
 		for (Entry<String, Business> someEntry: businessbyID.entrySet()) { //clustering everything
+=======
+
+	private ArrayList<HashSet<Business>> clustering(ArrayList<Business> centroids) {
+		HashMap<Business, Business> clustering = new HashMap<Business, Business>();
+		ArrayList<HashSet<Business>> clusters = new ArrayList<HashSet<Business>>();
+
+		for (Entry<String, Business> someEntry : businessbyID.entrySet()) { // clustering everything
+>>>>>>> 3198e0a86751bb9d3cc40ae02c42c80bfbdb75e0
 			Business current = someEntry.getValue();
-			
+
 			double currentDistance = -1.0;
+<<<<<<< HEAD
 			double minDistance = Double.MAX_VALUE;
 			double[] closest = new double[2];
 			
@@ -228,18 +310,47 @@ public class YelpDB<T> implements MP5Db<T> {
 				currentDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1], centers[0], centers[1]);
 				
 				if (currentDistance < minDistance) {
+=======
+			double minDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1],
+					centroids.get(0).getCoordinates()[0], centroids.get(0).getCoordinates()[1]);
+			Business closest = centroids.get(0);
+
+			for (Business centers : centroids) {
+				if (current.equals(centers))
+					break;
+				currentDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1],
+						centers.getCoordinates()[0], centers.getCoordinates()[1]);
+
+				if (currentDistance < minDistance)
+>>>>>>> 3198e0a86751bb9d3cc40ae02c42c80bfbdb75e0
 					closest = centers;
 					minDistance = currentDistance;
 				}
 			}
+<<<<<<< HEAD
 		
 			
 			clusters.get(centroids.indexOf(closest)).add(current);
+=======
+
+			clustering.put(current, closest);
+		}
+
+		for (Business centers : centroids) {
+			HashSet<Business> oneCluster = new HashSet<Business>();
+			oneCluster.add(centers);
+
+			for (Business someBusiness : clustering.keySet()) {
+				if (clustering.get(someBusiness).equals(centers))
+					oneCluster.add(someBusiness);
+			}
+			clusters.add(oneCluster);
+>>>>>>> 3198e0a86751bb9d3cc40ae02c42c80bfbdb75e0
 		}
 
 		return clusters;
 	}
-	
+
 	private double euclideanDistance(double x1, double y1, double x2, double y2) {
 		return Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
 	}
@@ -292,49 +403,23 @@ public class YelpDB<T> implements MP5Db<T> {
 		URLConnection fn = filename.openConnection();
 		BufferedReader br = new BufferedReader(new InputStreamReader(fn.getInputStream()));
 		String line;
+		
 		while ((line = br.readLine()) != null) {
-			JsonReader jr = Json.createReader(new StringReader(line));
-			JsonObject obj = jr.readObject();
-			jr.close();
-
+	        Gson gson = new Gson();
 			if (objtype.equals("user")) {
-
-				Type type = new TypeToken<HashMap<String, Integer>>() {
-				}.getType();
-				HashMap<String, Integer> votes = new Gson().fromJson(obj.getJsonObject("votes").toString(), type);
-
-				userbyID.put(obj.getString("user_id"),
-						new User(obj.getString("name"), obj.getInt("review_count"), obj.getString("user_id"),
-								obj.getString("url"), obj.getJsonNumber("average_stars").doubleValue(),
-								obj.getString("type"), votes));
+				
+				User user = gson.fromJson(line, User.class);
+				userbyID.put(user.getUserID(), user);
 
 			} else if (objtype.equals("review")) {
 
-				Type type = new TypeToken<HashMap<String, Integer>>() {
-				}.getType();
-				HashMap<String, Integer> votes = new Gson().fromJson(obj.getJsonObject("votes").toString(), type);
-
-				reviewbyID.put(obj.getString("review_id"),
-						new Review(obj.getString("business_id"), obj.getInt("stars"), obj.getString("review_id"),
-								obj.getString("type"), votes, obj.getString("text"), obj.getString("date"),
-								obj.getString("user_id")));
-
-				userbyID.get(obj.getString("user_id")).addReview(obj.getString("review_id"));
+				Review review = gson.fromJson(line, Review.class);
+				reviewbyID.put(review.getReviewID(), review);
+				userbyID.get(review.getUserID()).addReview(review.getReviewID());
 
 			} else {
-
-				businessbyID.put(obj.getString("business_id"), new Business(obj.getString("url"), obj.getString("name"),
-						obj.getString("business_id"), obj.getJsonNumber("longitude").doubleValue(),
-						obj.getJsonNumber("latitude").doubleValue(), obj.getInt("price"), obj.getString("photo_url"),
-						obj.getInt("review_count"),
-						obj.getJsonArray("schools").stream().map(school -> school.toString())
-								.collect(Collectors.toCollection(ArrayList::new)),
-						obj.getString("state"), obj.getString("full_address"), obj.getBoolean("open"),
-						obj.getJsonArray("neighborhoods").stream().map(neighborhood -> neighborhood.toString()).collect(
-								Collectors.toCollection(ArrayList::new)),
-						obj.getString("city"), obj.getString("type"), obj.getJsonArray("categories").stream()
-								.map(category -> category.toString()).collect(Collectors.toCollection(ArrayList::new)),
-						obj.getInt("stars")));
+				Business restaurant = gson.fromJson(line, Business.class);
+				businessbyID.put(restaurant.getBusinessID(), restaurant);
 			}
 
 		}

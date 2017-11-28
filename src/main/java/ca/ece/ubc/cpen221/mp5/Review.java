@@ -49,6 +49,39 @@ public class Review {
 	}
 
 	/**
+	 * Returns date review was written.
+	 * 
+	 * @return date
+	 */
+
+	public String getDate() {
+		return this.date;
+	}
+	
+	
+	/**
+	 * Returns the text written by reviewer.
+	 * 
+	 * @return review text
+	 */
+
+	public String getText() {
+		return this.text;
+	}
+	
+	/**
+	 * Returns hashmap of votes in each category.
+	 * 
+	 * @return votes
+	 */
+
+	public HashMap<String, Integer> getVotes() {
+		return this.votes;
+	}
+	
+	
+	
+	/**
 	 * Returns id of reviewed business.
 	 * 
 	 * @return business ID

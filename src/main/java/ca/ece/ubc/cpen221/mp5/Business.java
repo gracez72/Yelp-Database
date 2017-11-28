@@ -2,33 +2,47 @@ package ca.ece.ubc.cpen221.mp5;
 
 import java.util.ArrayList;
 
+import com.google.gson.annotations.Expose;
+
 /**
  * Business - a datatype that represents a business.
  *
  */
 
 public class Business {
-	
+	@Expose
 	private String url;
+	@Expose
 	private String name;
-	
+	@Expose
 	private final String business_id;
-	
+	@Expose
 	private double longitude;
+	@Expose
 	private double latitude;
-	
+	@Expose
 	private int price;
-	private int stars;
-	
+	@Expose
+	private double stars;
+	@Expose
 	private boolean open;
+	@Expose
 	private ArrayList<String> neighbourhoods;
+	@Expose
 	private String type;
+	@Expose
 	private String state;
+	@Expose
 	private String city;
+	@Expose
 	private String full_address;
+	@Expose
 	private String photo_url;
+	@Expose
 	private ArrayList<String> schools;
+	@Expose
 	private int review_count;
+	@Expose
 	private ArrayList<String> categories;
 	
 	/**
@@ -53,7 +67,7 @@ public class Business {
 	 */
 	public Business (String url, String name, String business_id, double longitude, double latitude, int price,
 			         String photo_url, int review_count, ArrayList<String> schools, String state, String full_address,
-			         boolean open, ArrayList<String> neighbourhoods, String city, String type, ArrayList<String> categories, int stars) {
+			         boolean open, ArrayList<String> neighbourhoods, String city, String type, ArrayList<String> categories, double stars) {
 		this.url = url;
 		this.name = name;
 		this.business_id = business_id;
@@ -221,7 +235,7 @@ public class Business {
 	 * 
 	 * @return stars
 	 */
-	public int getStars() {
+	public double getStars() {
 		return this.stars;
 	}
 }

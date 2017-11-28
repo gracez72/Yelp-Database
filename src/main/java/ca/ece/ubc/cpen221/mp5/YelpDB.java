@@ -67,7 +67,7 @@ public class YelpDB<T> implements MP5Db<T> {
 	}
 
 	// Catch exception later and print "ERR: INVALID_RESTAURANT_STRING"
-	public String getRestaurant(String businessID) throws InvalidBusinessException {
+	public String getRestaurant(String businessID) {
 
 		if (!businessbyID.containsKey(businessID))
 			return "ERR: INVALID_RESTAURANT_STRING";
@@ -79,12 +79,11 @@ public class YelpDB<T> implements MP5Db<T> {
 
 	}
 
-	public String addUser(JsonObject in) throws InvalidUserException {
+	public String addUser(String line) throws InvalidUserException {
 		try {
-			String name = in.get("name").getAsString();
-			User user = new User(name, "http://www.yelp.com/" + name.hashCode(), name.hashCode() + name, "user");
-			userbyID.put(name.hashCode() + name, user);
-			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+			Gson gson = new Gson();
+			User user = gson.fromJson(line, User.class);
+			userbyID.put(user.getUserID(), user);
 			return gson.toJson(user);
 		} catch (NullPointerException | ClassCastException c) {
 			return "ERR: NO_SUCH_USER";
@@ -92,22 +91,11 @@ public class YelpDB<T> implements MP5Db<T> {
 
 	}
 
-	public String addRestaurant(JsonObject in) throws InvalidRestaurantException {
+	public String addRestaurant(String line) {
 		try {
-			Type listType = new TypeToken<List<String>>() {}.getType();
-
-			String restaurant_name = in.get("name").getAsString();
-			Restaurant restaurant = new Restaurant(in.get("url").getAsString(), restaurant_name,
-					restaurant_name.hashCode() + restaurant_name, in.get("longitude").getAsDouble(),
-					in.get("latitude").getAsDouble(), in.get("price").getAsInt(), in.get("photo_url").getAsString(),
-					in.get("review_count").getAsInt(),
-					new Gson().fromJson(in.get("schools"), listType),
-					in.get("state").getAsString(), in.get("full_address").getAsString(), in.get("open").getAsBoolean(),
-					new Gson().fromJson(in.get("neighborhoods"), listType),
-					in.get("city").getAsString(), in.get("type").getAsString(), new Gson().fromJson(in.get("categories"), listType),
-					in.get("stars").getAsDouble());
-			businessbyID.put(restaurant_name.hashCode() + restaurant_name, restaurant);
-			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+			Gson gson = new Gson();
+			Restaurant restaurant = gson.fromJson(line, Restaurant.class);
+			businessbyID.put(restaurant.getBusinessID(), restaurant);
 			return gson.toJson(restaurant);
 		} catch (NullPointerException | ClassCastException c) {
 			return "ERR: NO_SUCH_RESTAURANT";

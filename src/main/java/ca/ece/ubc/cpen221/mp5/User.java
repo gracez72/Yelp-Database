@@ -60,6 +60,21 @@ public class User {
 		this.votes = votes;
 		
 	}
+	
+	public User (String name) {
+		this.name = name;
+		this.url = "http://www.yelp.com/user_details?userid=" + name.hashCode() + name;
+		this.user_id = name.hashCode() + name;
+		this.type = "user";
+		
+		this.review_count = 0;
+		this.average_stars = 0;
+		this.reviewList = new ArrayList<String>();
+		
+		HashMap<String, Integer> votes = new HashMap<String, Integer>();
+		this.votes = votes;
+	}
+	
 	public User() {
 		this.reviewList = new ArrayList<String>();
 		HashMap<String, Integer> votes = new HashMap<String, Integer>();

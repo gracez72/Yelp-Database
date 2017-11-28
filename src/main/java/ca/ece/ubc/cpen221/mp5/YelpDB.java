@@ -118,7 +118,6 @@ public class YelpDB<T> implements MP5Db<T> {
 	@Override
 	public String kMeansClusters_json(int k) {
 		List<HashSet<Business>> kMeansClusters = new ArrayList<HashSet<Business>>();
-<<<<<<< HEAD
 		boolean one = true;
 		
 		double minX = Double.MAX_VALUE;
@@ -169,34 +168,6 @@ public class YelpDB<T> implements MP5Db<T> {
 				double xValue = 0;
 				double yValue = 0;
 				int counter = 0;
-=======
-
-		ArrayList<Business> centroids = new ArrayList<Business>();
-		for (Entry<String, Business> someEntry : businessbyID.entrySet()) {
-			centroids.add(someEntry.getValue());
-
-			if (centroids.size() == k)
-				break;
-		}
-
-		List<HashSet<Business>> tempClusters = new ArrayList<HashSet<Business>>();
-
-		while (true) {
-			tempClusters = clustering(centroids); // make concurrent later
-
-			ArrayList<Business> newcentroids = new ArrayList<Business>();
-
-			for (Business centers : centroids) { // make concurrent later
-				double xValue = centers.getCoordinates()[0];
-				double yValue = centers.getCoordinates()[0];
-				int counter = 1;
-
-				HashSet<Business> oneCluster = new HashSet<Business>();
-				for (HashSet<Business> theCluster : tempClusters) {
-					if (theCluster.contains(centers))
-						oneCluster = theCluster;
-				}
->>>>>>> 3198e0a86751bb9d3cc40ae02c42c80bfbdb75e0
 
 				for (Business object : oneCluster) {
 					xValue += object.getCoordinates()[0];
@@ -207,38 +178,16 @@ public class YelpDB<T> implements MP5Db<T> {
 				newCenter[0] = xValue / counter;
 				newCenter[1] = yValue / counter;
 
-<<<<<<< HEAD
 				newcentroids.add(newCenter);
 			}
 			
 			if(!one & kMeansClusters.equals(tempClusters))
-=======
-				double meanX = xValue / counter;
-				double meanY = yValue / counter;
-
-				Business closest = null;
-				double currentDistance = -1.0;
-				double minDistance = euclideanDistance(meanX, meanY, xValue, yValue);
-
-				for (Business object : oneCluster) {
-					currentDistance = euclideanDistance(meanX, meanY, object.getCoordinates()[0],
-							object.getCoordinates()[1]);
-
-					if (currentDistance < minDistance)
-						closest = object;
-				}
-				newcentroids.add(closest);
-			}
-
-			if (centroids.equals(newcentroids))
->>>>>>> 3198e0a86751bb9d3cc40ae02c42c80bfbdb75e0
 				break;
 			
 			kMeansClusters.clear();
 			kMeansClusters = tempClusters;
 		}
 
-<<<<<<< HEAD
 		String json = "[";
 		int cluster = 0;
 		double weight = 5.0;
@@ -250,20 +199,6 @@ public class YelpDB<T> implements MP5Db<T> {
 				
 				json = json.concat("\"name\": \"" + object.getName() + "\", ");
 				
-=======
-		kMeansClusters = tempClusters;
-		String json = "";
-		int cluster = 0;
-		double weight = 1.0;
-
-		for (HashSet<Business> oneCluster : kMeansClusters) {
-			for (Business object : oneCluster) {
-				json = json.concat("{\"x\": " + Double.toString(object.getCoordinates()[0]) + ", ");
-				json = json.concat("\"y\": " + Double.toString(object.getCoordinates()[1]) + ", ");
-
-				json = json.concat("\"name\": " + object.getName() + ", ");
-
->>>>>>> 3198e0a86751bb9d3cc40ae02c42c80bfbdb75e0
 				json = json.concat("\"cluster\": " + Integer.toString(cluster) + ", ");
 				json = json.concat("\"weight\": " + Double.toString(weight) + "}, ");
 			}
@@ -282,7 +217,6 @@ public class YelpDB<T> implements MP5Db<T> {
 		
 		return json;
 	}
-<<<<<<< HEAD
 	
 	private ArrayList<HashSet<Business>> clustering (ArrayList<double[]> centroids) {
 		ArrayList<HashSet<Business>> clusters = new ArrayList<HashSet<Business>>();
@@ -291,18 +225,9 @@ public class YelpDB<T> implements MP5Db<T> {
 		}
 		
 		for (Entry<String, Business> someEntry: businessbyID.entrySet()) { //clustering everything
-=======
-
-	private ArrayList<HashSet<Business>> clustering(ArrayList<Business> centroids) {
-		HashMap<Business, Business> clustering = new HashMap<Business, Business>();
-		ArrayList<HashSet<Business>> clusters = new ArrayList<HashSet<Business>>();
-
-		for (Entry<String, Business> someEntry : businessbyID.entrySet()) { // clustering everything
->>>>>>> 3198e0a86751bb9d3cc40ae02c42c80bfbdb75e0
 			Business current = someEntry.getValue();
-
+			
 			double currentDistance = -1.0;
-<<<<<<< HEAD
 			double minDistance = Double.MAX_VALUE;
 			double[] closest = new double[2];
 			
@@ -310,42 +235,13 @@ public class YelpDB<T> implements MP5Db<T> {
 				currentDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1], centers[0], centers[1]);
 				
 				if (currentDistance < minDistance) {
-=======
-			double minDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1],
-					centroids.get(0).getCoordinates()[0], centroids.get(0).getCoordinates()[1]);
-			Business closest = centroids.get(0);
-
-			for (Business centers : centroids) {
-				if (current.equals(centers))
-					break;
-				currentDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1],
-						centers.getCoordinates()[0], centers.getCoordinates()[1]);
-
-				if (currentDistance < minDistance)
->>>>>>> 3198e0a86751bb9d3cc40ae02c42c80bfbdb75e0
 					closest = centers;
 					minDistance = currentDistance;
 				}
 			}
-<<<<<<< HEAD
 		
 			
 			clusters.get(centroids.indexOf(closest)).add(current);
-=======
-
-			clustering.put(current, closest);
-		}
-
-		for (Business centers : centroids) {
-			HashSet<Business> oneCluster = new HashSet<Business>();
-			oneCluster.add(centers);
-
-			for (Business someBusiness : clustering.keySet()) {
-				if (clustering.get(someBusiness).equals(centers))
-					oneCluster.add(someBusiness);
-			}
-			clusters.add(oneCluster);
->>>>>>> 3198e0a86751bb9d3cc40ae02c42c80bfbdb75e0
 		}
 
 		return clusters;

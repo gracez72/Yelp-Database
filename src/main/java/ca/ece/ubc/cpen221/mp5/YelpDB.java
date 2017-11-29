@@ -12,17 +12,12 @@ import java.util.Set;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 
-
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 
-import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLConnection;
-
-
 
 public class YelpDB<T> implements MP5Db<T> {
 
@@ -66,9 +61,7 @@ public class YelpDB<T> implements MP5Db<T> {
 		return null;
 	}
 
-	// Catch exception later and print "ERR: INVALID_RESTAURANT_STRING"
 	public String getRestaurant(String businessID) {
-
 		if (!businessbyID.containsKey(businessID))
 			return "ERR: INVALID_RESTAURANT_STRING";
 		else {
@@ -79,13 +72,31 @@ public class YelpDB<T> implements MP5Db<T> {
 
 	}
 
-	public String addUser(String line) throws InvalidUserException {
+	public String addReview(String line) {
+		try {
+			Gson gson = new Gson();
+			Review review = gson.fromJson(line, Review.class);
+			if (review.getBusinessID() == null | review.getDate() == null | review.getUserID() == null) {
+				return "ERR: NOT_ENOUGH_REVIEW_INFO";
+			} else {
+				reviewbyID.put(review.getReviewID(), review);
+				userbyID.get(review.getUserID()).addReview(review.getReviewID());
+				return gson.toJson(review);
+			}
+		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {
+			return "ERR: NO_SUCH_REVIEW";
+		}
+
+	}
+
+	public String addUser(String line) {
 		try {
 			Gson gson = new Gson();
 			User user = gson.fromJson(line, User.class);
+			if (user.getName() == null) return "ERR:NOT_ENOUGH_USER_INFO";
 			userbyID.put(user.getUserID(), user);
 			return gson.toJson(user);
-		} catch (NullPointerException | ClassCastException c) {
+		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {
 			return "ERR: NO_SUCH_USER";
 		}
 
@@ -95,14 +106,15 @@ public class YelpDB<T> implements MP5Db<T> {
 		try {
 			Gson gson = new Gson();
 			Restaurant restaurant = gson.fromJson(line, Restaurant.class);
+			if (restaurant.getCity() == null | restaurant.getCoordinates() == null |
+				restaurant.getName() == null | restaurant.getState() == null) return "ERR:NOT_ENOUGH_RESTAURANT_INFO";
 			businessbyID.put(restaurant.getBusinessID(), restaurant);
 			return gson.toJson(restaurant);
-		} catch (NullPointerException | ClassCastException c) {
+		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {
 			return "ERR: NO_SUCH_RESTAURANT";
 		}
 
 	}
-
 
 	/**
 	 * Cluster objects into k clusters using k-means clustering
@@ -280,11 +292,11 @@ public class YelpDB<T> implements MP5Db<T> {
 		URLConnection fn = filename.openConnection();
 		BufferedReader br = new BufferedReader(new InputStreamReader(fn.getInputStream()));
 		String line;
-		
+
 		while ((line = br.readLine()) != null) {
-	        Gson gson = new Gson();
+			Gson gson = new Gson();
 			if (objtype.equals("user")) {
-				
+
 				User user = gson.fromJson(line, User.class);
 				userbyID.put(user.getUserID(), user);
 

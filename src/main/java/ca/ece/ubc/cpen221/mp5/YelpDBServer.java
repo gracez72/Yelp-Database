@@ -8,29 +8,22 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-
-
 /**
- * DBServer is a server that handles request from a client using the YelpDB.
- * It accepts requests of the form: Request ::= Number "\n" Number ::= [0-9]+
- * and for each request, returns a reply of the form: Reply ::= (Number | "err")
+ * DBServer is a server that handles request from a client using the YelpDB. It
+ * accepts requests of the form: Request ::= Number "\n" Number ::= [0-9]+ and
+ * for each request, returns a reply of the form: Reply ::= (Number | "err")
  * "\n" where a Number is the request Fibonacci number, or "err" is used to
- * indicate a misformatted request. DBServer can handle multiple
- * concurrent clients.
+ * indicate a misformatted request. DBServer can handle multiple concurrent
+ * clients.
  * 
  * FORMAT FROM: FIBONACCISERVER EXAMPLE
  */
 public class YelpDBServer {
 	/** Default port number where the server listens for connections. */
-	public static int DB_PORT;
 
 	private ServerSocket serverSocket;
 
 	// Rep invariant: serverSocket != null
-
 
 	/**
 	 * Make a DBServer that listens for connections on port.
@@ -40,7 +33,7 @@ public class YelpDBServer {
 	 */
 	public YelpDBServer(int port) throws IOException {
 		serverSocket = new ServerSocket(port);
-		this.DB_PORT = port;
+		System.err.println("Started server on port " + port);
 	}
 
 	/**
@@ -89,31 +82,48 @@ public class YelpDBServer {
 		// get the socket's input stream, and wrap converters around it
 		// that convert it from a byte stream to a character stream,
 		// and that buffer it so that we can read a line at a time
-		BufferedReader in = new BufferedReader(new InputStreamReader(
-				socket.getInputStream()));
+		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
 		// similarly, wrap character=>bytestream converter around the
 		// socket output stream, and wrap a PrintWriter around that so
 		// that we have more convenient ways to write Java primitive
 		// types to it.
-		PrintWriter out = new PrintWriter(new OutputStreamWriter(
-				socket.getOutputStream()), true);
+		PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
 
+		
 		try {
-			// each request is a single line containing a number
-			for (String line = in.readLine(); line != null; line = in
-					.readLine()) {
-				System.err.println("request: " + line);
+
+			YelpDB<Restaurant> db = new YelpDB<Restaurant>(
+					"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmn2sjveuyRPCkEY2WXTzAtGjTlLYks5aJhUMwA%3D%3D",
+					"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
+					"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
+			
+			for (String line = in.readLine(); line != null; line = in.readLine()) {
+				System.err.println("request: " + line.toString());
 				try {
-					YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmo9tXwh9lYalidf_muOfIGcyx4H1ks5aIm-HwA%3D%3D",
-				             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
-				             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
-					JsonParser parser = new JsonParser();
-					JsonObject jsonObj = parser.parse(line).getAsJsonObject();
-					
-					System.err.println("reply: " + line);
-					out.println(line);
-				} catch (NumberFormatException e) {
+					String reply = "ERR: ILLEGAL_REQUEST";
+					String[] split = line.split("\\s+");
+
+					if (split.length > 1) {
+						StringBuilder builder = new StringBuilder();
+						for (int i = 1; i < split.length; i++) {
+							builder.append(split[i] + " ");
+						}
+						split[1] = builder.toString().trim();
+						if (split[0].equals("GETRESTAURANT"))
+							reply = db.getRestaurant(split[1]);
+						else if (split[0].equals("ADDUSER"))
+							reply = db.addUser(split[1]);
+						else if (split[0].equals("ADDRESTAURANT"))
+							reply = db.addRestaurant(split[1]);
+						else if (split[0].equals("ADDREVIEW"))
+							reply = db.addReview(split[1]);
+					} else if (split[0].equals("end"))
+						reply = "Closing client...";
+					out.println(reply);
+					System.err.println("reply: " + reply);
+
+				} catch (NullPointerException e) {
 					// complain about ill-formatted request
 					System.err.println("reply: err");
 					out.print("err\n");
@@ -127,15 +137,13 @@ public class YelpDBServer {
 			in.close();
 		}
 	}
-	
-
 
 	/**
 	 * Start a DBServer running on the default port.
 	 */
 	public static void main(String[] args) {
 		try {
-			YelpDBServer server = new YelpDBServer(4949);
+			YelpDBServer server = new YelpDBServer(Integer.parseInt(args[0]));
 			server.serve();
 		} catch (IOException e) {
 			e.printStackTrace();

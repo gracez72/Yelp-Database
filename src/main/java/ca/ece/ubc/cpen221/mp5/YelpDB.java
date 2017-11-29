@@ -1,6 +1,8 @@
 package ca.ece.ubc.cpen221.mp5;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -8,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
@@ -99,7 +102,6 @@ public class YelpDB<T> implements MP5Db<T> {
 		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {
 			return "ERR: NO_SUCH_USER";
 		}
-
 	}
 
 	public String addRestaurant(String line) {
@@ -122,119 +124,135 @@ public class YelpDB<T> implements MP5Db<T> {
 	 * @param k
 	 *            number of clusters to create (0 < k <= number of objects)
 	 * @return a String, in JSON format, that represents the clusters
+	 * @throws IOException 
 	 */
 	@Override
 	public String kMeansClusters_json(int k) {
 		List<HashSet<Business>> kMeansClusters = new ArrayList<HashSet<Business>>();
-
-		ArrayList<Business> centroids = new ArrayList<Business>();
-		for (Entry<String, Business> someEntry : businessbyID.entrySet()) {
-			centroids.add(someEntry.getValue());
-
-			if (centroids.size() == k)
-				break;
+		boolean one = true;
+		
+		double minX = Double.MAX_VALUE;
+		double maxX = -Double.MAX_VALUE;
+		double minY = Double.MAX_VALUE;
+		double maxY = -Double.MAX_VALUE;
+		
+		for (Entry<String, Business> someEntry: businessbyID.entrySet()) {
+			double currentX = someEntry.getValue().getCoordinates()[0];
+			double currentY = someEntry.getValue().getCoordinates()[1];
+			
+			if(currentX < minX)
+				minX = currentX;
+			
+			if(currentX > maxX)
+				maxX = currentX;
+			
+			if (currentY < minY)
+				minY = currentY;
+			
+			if(currentY > maxY)
+				maxY = currentY;
 		}
+		
+		ArrayList<double[]> centroids = new ArrayList<double[]> ();
+		for(int index = 0; index < k; index++) {
+			double[] randCoordinates = new double[2];
+			Random r = new Random ();
+			randCoordinates[0] = minX + (maxX - minX)*r.nextDouble();
+			randCoordinates[1] = minY + (maxY - minY)*r.nextDouble();
 
-		List<HashSet<Business>> tempClusters = new ArrayList<HashSet<Business>>();
+			centroids.add(index, randCoordinates);
+		}
+		
 
 		while (true) {
-			tempClusters = clustering(centroids); // make concurrent later
-
-			ArrayList<Business> newcentroids = new ArrayList<Business>();
-
-			for (Business centers : centroids) { // make concurrent later
-				double xValue = centers.getCoordinates()[0];
-				double yValue = centers.getCoordinates()[0];
-				int counter = 1;
-
-				HashSet<Business> oneCluster = new HashSet<Business>();
-				for (HashSet<Business> theCluster : tempClusters) {
-					if (theCluster.contains(centers))
-						oneCluster = theCluster;
-				}
+			List<HashSet<Business>> tempClusters = new ArrayList<HashSet<Business>>();
+			tempClusters = clustering(centroids); //make concurrent later
+			
+			if (one) {
+				kMeansClusters = tempClusters;
+				one = false;
+			}
+		
+			ArrayList<double[]> newcentroids = new ArrayList<double[]>();
+			
+			for (HashSet<Business> oneCluster : tempClusters) { //make concurrent later
+				double xValue = 0;
+				double yValue = 0;
+				int counter = 0;
 
 				for (Business object : oneCluster) {
 					xValue += object.getCoordinates()[0];
 					yValue += object.getCoordinates()[1];
 					counter++;
 				}
+				double[] newCenter = new double[2];
+				newCenter[0] = xValue / counter;
+				newCenter[1] = yValue / counter;
 
-				double meanX = xValue / counter;
-				double meanY = yValue / counter;
-
-				Business closest = null;
-				double currentDistance = -1.0;
-				double minDistance = euclideanDistance(meanX, meanY, xValue, yValue);
-
-				for (Business object : oneCluster) {
-					currentDistance = euclideanDistance(meanX, meanY, object.getCoordinates()[0],
-							object.getCoordinates()[1]);
-
-					if (currentDistance < minDistance)
-						closest = object;
-				}
-				newcentroids.add(closest);
+				newcentroids.add(newCenter);
 			}
-
-			if (centroids.equals(newcentroids))
+			
+			if(!one & kMeansClusters.equals(tempClusters))
 				break;
-			centroids = newcentroids;
+			
+			kMeansClusters.clear();
+			kMeansClusters = tempClusters;
 		}
 
-		kMeansClusters = tempClusters;
-		String json = "";
+		String json = "[";
 		int cluster = 0;
-		double weight = 1.0;
-
-		for (HashSet<Business> oneCluster : kMeansClusters) {
-			for (Business object : oneCluster) {
+		double weight = 5.0;
+		
+		for(HashSet<Business> oneCluster: kMeansClusters) {
+			for (Business object: oneCluster) {
 				json = json.concat("{\"x\": " + Double.toString(object.getCoordinates()[0]) + ", ");
 				json = json.concat("\"y\": " + Double.toString(object.getCoordinates()[1]) + ", ");
-
-				json = json.concat("\"name\": " + object.getName() + ", ");
-
+				
+				json = json.concat("\"name\": \"" + object.getName() + "\", ");
+				
 				json = json.concat("\"cluster\": " + Integer.toString(cluster) + ", ");
 				json = json.concat("\"weight\": " + Double.toString(weight) + "}, ");
 			}
 			cluster++;
 		}
+		
+		json = json.substring(0, json.length() -2).concat("]");
+		
+		BufferedWriter write;
+		try {
+			write = new BufferedWriter(new FileWriter("voronoi.json"));
+			write.write(json);
+			write.close();
+		} catch (IOException e1) {
+		}
+		
 		return json;
 	}
-
-	private ArrayList<HashSet<Business>> clustering(ArrayList<Business> centroids) {
-		HashMap<Business, Business> clustering = new HashMap<Business, Business>();
+	
+	private ArrayList<HashSet<Business>> clustering (ArrayList<double[]> centroids) {
 		ArrayList<HashSet<Business>> clusters = new ArrayList<HashSet<Business>>();
-
-		for (Entry<String, Business> someEntry : businessbyID.entrySet()) { // clustering everything
-			Business current = someEntry.getValue();
-
-			double currentDistance = -1.0;
-			double minDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1],
-					centroids.get(0).getCoordinates()[0], centroids.get(0).getCoordinates()[1]);
-			Business closest = centroids.get(0);
-
-			for (Business centers : centroids) {
-				if (current.equals(centers))
-					break;
-				currentDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1],
-						centers.getCoordinates()[0], centers.getCoordinates()[1]);
-
-				if (currentDistance < minDistance)
-					closest = centers;
-			}
-
-			clustering.put(current, closest);
+		for (int index = 0; index < centroids.size(); index++) {
+			clusters.add(index, new HashSet<Business>());
 		}
-
-		for (Business centers : centroids) {
-			HashSet<Business> oneCluster = new HashSet<Business>();
-			oneCluster.add(centers);
-
-			for (Business someBusiness : clustering.keySet()) {
-				if (clustering.get(someBusiness).equals(centers))
-					oneCluster.add(someBusiness);
+		
+		for (Entry<String, Business> someEntry: businessbyID.entrySet()) { //clustering everything
+			Business current = someEntry.getValue();
+			
+			double currentDistance = -1.0;
+			double minDistance = Double.MAX_VALUE;
+			double[] closest = new double[2];
+			
+			for (double[] centers: centroids) {
+				currentDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1], centers[0], centers[1]);
+				
+				if (currentDistance < minDistance) {
+					closest = centers;
+					minDistance = currentDistance;
+				}
 			}
-			clusters.add(oneCluster);
+		
+			
+			clusters.get(centroids.indexOf(closest)).add(current);
 		}
 
 		return clusters;

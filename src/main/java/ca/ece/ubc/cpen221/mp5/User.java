@@ -179,4 +179,13 @@ public class User {
 		reviewList.add(reviewID);
 	}
 
+	/**
+	 * Adds review ID to reviewList.
+	 * 
+	 * @param reviewID
+	 */
+	public void setuser_id() {
+		this.user_id = name.hashCode() + name;
+	}
+
 }

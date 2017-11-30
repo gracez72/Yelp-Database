@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 
@@ -24,17 +25,17 @@ import java.net.URLConnection;
 
 public class YelpDB<T> implements MP5Db<T> {
 
-	private HashMap<String, User> userbyID;
-	private HashMap<String, Business> businessbyID;
-	private HashMap<String, Review> reviewbyID;
+	private ConcurrentHashMap<String, User> userbyID;
+	private ConcurrentHashMap<String, Business> businessbyID;
+	private ConcurrentHashMap<String, Review> reviewbyID;
 
 	// Yelp DB Constructor
 
 	public YelpDB(String businessFile, String userFile, String reviewFile) {
 		try {
-			userbyID = new HashMap<String, User>();
-			businessbyID = new HashMap<String, Business>();
-			reviewbyID = new HashMap<String, Review>();
+			userbyID = new ConcurrentHashMap<String, User>();
+			businessbyID = new ConcurrentHashMap<String, Business>();
+			reviewbyID = new ConcurrentHashMap<String, Review>();
 
 			ParseJSON(businessFile, "business");
 			ParseJSON(userFile, "user");
@@ -46,7 +47,7 @@ public class YelpDB<T> implements MP5Db<T> {
 
 	}
 
-	public HashMap<String, Business> getBusinessbyID() {
+	public ConcurrentHashMap<String, Business> getBusinessbyID() {
 		return this.businessbyID;
 	}
 
@@ -97,6 +98,7 @@ public class YelpDB<T> implements MP5Db<T> {
 			Gson gson = new Gson();
 			User user = gson.fromJson(line, User.class);
 			if (user.getName() == null) return "ERR:NOT_ENOUGH_USER_INFO";
+			user.setuser_id();
 			userbyID.put(user.getUserID(), user);
 			return gson.toJson(user);
 		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {

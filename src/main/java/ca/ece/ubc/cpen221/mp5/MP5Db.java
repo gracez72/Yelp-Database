@@ -2,6 +2,7 @@ package ca.ece.ubc.cpen221.mp5;
 
 import java.util.HashMap;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToDoubleBiFunction;;
 
 // This interface represents a database of objects of type T. 
@@ -39,5 +40,5 @@ public interface MP5Db<T> {
 	 */
 	ToDoubleBiFunction<MP5Db<T>, String> getPredictorFunction(String user);
 	
-	HashMap<String, Business> getBusinessbyID();
+	ConcurrentHashMap<String, Business> getBusinessbyID();
 }

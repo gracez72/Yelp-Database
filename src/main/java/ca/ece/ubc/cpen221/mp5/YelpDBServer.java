@@ -118,6 +118,8 @@ public class YelpDBServer {
 							reply = db.addRestaurant(split[1]);
 						else if (split[0].equals("ADDREVIEW"))
 							reply = db.addReview(split[1]);
+						else if (split[0].equals("QUERY"))
+							reply = db.parseQuery(split[1]);
 					} else if (split[0].equals("end"))
 						reply = "Closing client...";
 					out.println(reply);

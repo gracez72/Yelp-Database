@@ -16,6 +16,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.antlr.v4.tool.Grammar;
+
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -26,11 +34,22 @@ import java.net.URLConnection;
 public class YelpDB<T> implements MP5Db<T> {
 
 	private ConcurrentHashMap<String, User> userbyID;
-	private ConcurrentHashMap<String, Business> businessbyID;
+	private static ConcurrentHashMap<String, Business> businessbyID;
 	private ConcurrentHashMap<String, Review> reviewbyID;
 
-	// Yelp DB Constructor
+	public static void main(String[] args) {
+		YelpDB<Restaurant> db = new YelpDB<Restaurant>(
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmo9tXwh9lYalidf_muOfIGcyx4H1ks5aIm-HwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
 
+		String query = "in(Terminal Ave) && price < 3";
+		parseQuery(query);
+	}
+	
+	
+	
+	// Yelp DB Constructor
 	public YelpDB(String businessFile, String userFile, String reviewFile) {
 		try {
 			userbyID = new ConcurrentHashMap<String, User>();
@@ -47,10 +66,6 @@ public class YelpDB<T> implements MP5Db<T> {
 
 	}
 
-	public ConcurrentHashMap<String, Business> getBusinessbyID() {
-		return this.businessbyID;
-	}
-
 	/**
 	 * Perform a structured query and return the set of objects that matches the
 	 * query
@@ -60,9 +75,50 @@ public class YelpDB<T> implements MP5Db<T> {
 	 */
 	@Override
 	public Set<T> getMatches(String queryString) {
-		// TODO Auto-generated method stub
-
+		CharStream stream = new ANTLRInputStream(queryString);
+		GrammarLexer lexer = new GrammarLexer(stream);
+		TokenStream tokens = new CommonTokenStream(lexer);
+		GrammarParser parser = new GrammarParser(tokens);
+		
+		ParseTree tree = parser.query();
+		ParseTreeWalker walker = new ParseTreeWalker();
+		GrammarListenerGetNodes listener = new GrammarListenerGetNodes();
+		walker.walk(listener, tree);
+		
+		Set<Business> businesses = new HashSet<Business> ();
+		for(Entry<String, Business> someentry: businessbyID.entrySet()) {
+			businesses.add(someentry.getValue());
+		}
+		
+		Set<Business> filteredBusinesses = businesses.stream().filter(x -> x.getNeighbourhoods().contains(listener.getNeighbourhoods().get(0)))
+					.collect(Collectors.toSet());
+		
+			System.out.println(filteredBusinesses);
 		return null;
+	}
+	
+	public static String parseQuery(String query) {
+		//Set<T> matches = getMatches(query);
+
+		CharStream stream = new ANTLRInputStream(query);
+		GrammarLexer lexer = new GrammarLexer(stream);
+		TokenStream tokens = new CommonTokenStream(lexer);
+		GrammarParser parser = new GrammarParser(tokens);
+		
+		ParseTree tree = parser.query();
+		ParseTreeWalker walker = new ParseTreeWalker();
+		GrammarListenerGetNodes listener = new GrammarListenerGetNodes();
+		walker.walk(listener, tree);
+
+
+		
+		return null;
+	}
+	
+	
+	
+	public ConcurrentHashMap<String, Business> getBusinessbyID() {
+		return this.businessbyID;
 	}
 
 	public String getRestaurant(String businessID) {
@@ -120,6 +176,7 @@ public class YelpDB<T> implements MP5Db<T> {
 
 	}
 
+	
 	/**
 	 * Cluster objects into k clusters using k-means clustering
 	 * 
@@ -130,14 +187,12 @@ public class YelpDB<T> implements MP5Db<T> {
 	 */
 	@Override
 	public String kMeansClusters_json(int k) {
-		List<HashSet<Business>> kMeansClusters = new ArrayList<HashSet<Business>>();
-		boolean one = true;
-		
 		double minX = Double.MAX_VALUE;
 		double maxX = -Double.MAX_VALUE;
 		double minY = Double.MAX_VALUE;
 		double maxY = -Double.MAX_VALUE;
 		
+		//Find the range of x- and y- coordinates for businesses
 		for (Entry<String, Business> someEntry: businessbyID.entrySet()) {
 			double currentX = someEntry.getValue().getCoordinates()[0];
 			double currentY = someEntry.getValue().getCoordinates()[1];
@@ -155,6 +210,7 @@ public class YelpDB<T> implements MP5Db<T> {
 				maxY = currentY;
 		}
 		
+		//Make the first set of centroids a random value (x,y) within the above calculated range
 		ArrayList<double[]> centroids = new ArrayList<double[]> ();
 		for(int index = 0; index < k; index++) {
 			double[] randCoordinates = new double[2];
@@ -164,11 +220,14 @@ public class YelpDB<T> implements MP5Db<T> {
 
 			centroids.add(index, randCoordinates);
 		}
-		
 
+		List<HashSet<Business>> kMeansClusters = new ArrayList<HashSet<Business>>();
+		boolean one = true;
+		boolean empty = false;
 		while (true) {
 			List<HashSet<Business>> tempClusters = new ArrayList<HashSet<Business>>();
-			tempClusters = clustering(centroids); //make concurrent later
+			tempClusters = clustering(centroids); 
+			empty = false;
 			
 			if (one) {
 				kMeansClusters = tempClusters;
@@ -177,30 +236,49 @@ public class YelpDB<T> implements MP5Db<T> {
 		
 			ArrayList<double[]> newcentroids = new ArrayList<double[]>();
 			
-			for (HashSet<Business> oneCluster : tempClusters) { //make concurrent later
-				double xValue = 0;
-				double yValue = 0;
-				int counter = 0;
-
-				for (Business object : oneCluster) {
-					xValue += object.getCoordinates()[0];
-					yValue += object.getCoordinates()[1];
-					counter++;
+			//Calculates the new centroids for each of the k clusters
+			for (HashSet<Business> oneCluster : tempClusters) { 
+				//If cluster is empty, a new random centroid is assigned as above
+				if (oneCluster.isEmpty()) {
+					double[] randCoordinates = new double[2];
+					Random r = new Random ();
+					randCoordinates[0] = minX + (maxX - minX)*r.nextDouble();
+					randCoordinates[1] = minY + (maxY - minY)*r.nextDouble();
+					newcentroids.add(randCoordinates);
+					empty = true;
 				}
-				double[] newCenter = new double[2];
-				newCenter[0] = xValue / counter;
-				newCenter[1] = yValue / counter;
-
-				newcentroids.add(newCenter);
+				
+				//If cluster is not empty, mean value of cluster is found and 
+				//new centroid is assigned to that point
+				else {
+					double xValue = 0;
+					double yValue = 0;
+					int counter = 0;
+	
+					for (Business object : oneCluster) {
+						xValue += object.getCoordinates()[0];
+						yValue += object.getCoordinates()[1];
+						counter++;
+					}
+					double[] meanCenter = new double[2];
+					meanCenter[0] = xValue / counter;
+					meanCenter[1] = yValue / counter;
+	
+					newcentroids.add(meanCenter);
+				}
 			}
 			
-			if(!one & kMeansClusters.equals(tempClusters))
+			//Algorithm continues until the clusters no longer change and
+			//there are no empty clusters
+			if(!one && !empty && kMeansClusters.equals(tempClusters))
 				break;
 			
 			kMeansClusters.clear();
 			kMeansClusters = tempClusters;
+			centroids = newcentroids;
 		}
 
+		//Constructs string in JSON format for each cluster
 		String json = "[";
 		int cluster = 0;
 		double weight = 5.0;
@@ -217,9 +295,10 @@ public class YelpDB<T> implements MP5Db<T> {
 			}
 			cluster++;
 		}
-		
+
 		json = json.substring(0, json.length() -2).concat("]");
 		
+		//Writes this string to a file
 		BufferedWriter write;
 		try {
 			write = new BufferedWriter(new FileWriter("voronoi.json"));
@@ -231,19 +310,37 @@ public class YelpDB<T> implements MP5Db<T> {
 		return json;
 	}
 	
+	
+	/**
+	 * Helper function for the kMeansCluster method. Takes in a list of the
+	 * coordinates of k centroids, and clusters the businesses in the database
+	 * according to which center they are closest to.
+	 * 
+	 * @param ArrayList of centroids, with each entry being a size 2 array with
+	 * 		  arr[0] = x-coordinate and arr[1] = y-coordinate of the centroid
+	 * 			-Size of array list is always equal to k
+	 * @return ArrayList of HashSet<Business> where each entry in the array list 
+	 * 		   is a different cluster, and each entry contains all the businesses
+	 * 		   in that cluster
+	 * 			-ArrayList can hold empty HashSets, meaning that a cluster is empty
+	 */
 	private ArrayList<HashSet<Business>> clustering (ArrayList<double[]> centroids) {
 		ArrayList<HashSet<Business>> clusters = new ArrayList<HashSet<Business>>();
+		
+		//Initializing ArrayList to hold k empty clusters, where k = centroids.size()
 		for (int index = 0; index < centroids.size(); index++) {
 			clusters.add(index, new HashSet<Business>());
 		}
 		
-		for (Entry<String, Business> someEntry: businessbyID.entrySet()) { //clustering everything
+		//Loop through set of businesses in database and find its closest centroid
+		for (Entry<String, Business> someEntry: businessbyID.entrySet()) { 
 			Business current = someEntry.getValue();
 			
 			double currentDistance = -1.0;
 			double minDistance = Double.MAX_VALUE;
 			double[] closest = new double[2];
 			
+			//Loop through the centroids to find the closest centroid to the current business
 			for (double[] centers: centroids) {
 				currentDistance = euclideanDistance(current.getCoordinates()[0], current.getCoordinates()[1], centers[0], centers[1]);
 				
@@ -253,13 +350,25 @@ public class YelpDB<T> implements MP5Db<T> {
 				}
 			}
 		
-			
+			//Add the business to the ArrayList position corresponding to the
+			//same position of its center in the centroids array
 			clusters.get(centroids.indexOf(closest)).add(current);
 		}
 
 		return clusters;
 	}
 
+	/**
+	 * Calculates squared distance between two Cartesian points
+	 * @param x1, y1
+	 * 				coordinates of a point (x1, y1), values are not null 
+	 * 				and can be negative 
+	 * @param x2, y2
+	 * 				coordinates of a second point (x2, y2), values are not null
+	 * 				and can be negative
+	 * @return the squared distance between the two points inputted into the function,
+	 * 		   returns 0 if the two inputted points are the same
+	 */
 	private double euclideanDistance(double x1, double y1, double x2, double y2) {
 		return Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
 	}

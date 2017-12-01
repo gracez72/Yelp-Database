@@ -1,39 +1,34 @@
+grammar Grammar;
+
+/*
+ * Parser Rules
+ */
+query : atom (atom | AND | OR)* ;
+atom : in | category | rating | price | name | (LPAREN orexpr RPAREN) ;
+andexpr : atom (AND atom)* ;
+orexpr : andexpr (OR andexpr)* ;
+
+ineq : GT | GTE | LT | LTE | EQ ;
+in : 'in' LPAREN (WORD | NUM)* RPAREN ;
+category : 'category' LPAREN (WORD)* RPAREN ;
+name : 'name' LPAREN (WORD | NUM)* RPAREN ;
+price : 'price' ineq NUM;
+rating : 'rating' ineq NUM;
 
 /*
  * Lexer Rules
  */
- 
- grammar Grammar;
-
-<orExpr> ::= <andExpr>(<or><andExpr>)*
-<andExpr> ::= <atom>(<and><atom>)*
-
-ineq ::= <gt>|<gte>|<lt>|<lte>|<eq>
-<gt> ::= ">"
-<gte> ::= ">="
-<in> ::= "in" <LParen><string><RParen>
-<category> ::= "category" <LParen><string><RParen>
-<name> ::= "name" <LParen><string><RParen>
-<rating> ::= "rating" <ineq><num>
-
-ATOM : <in>|<category>|<rating>|<price>|<name>|<LParen><orExpr><RParen> ;
-
 WORD : [A-Za-z]+ ;
+SPACE : [ \t\n]+ -> skip;
+NUM: [0-9] ;
 
-OR : "||" ; 
+OR : '||' ; 
+AND : '&&' ;
+LPAREN : '(' ; 
+RPAREN : ')' ;
 
-EQ : "=" ;
-
-AND : "&&" ;
-
-NUM : ("1" .. "5");
-
-LTE : "<=" ;
-
-LT : "<" ;
-
-LPAREN : "(" ; 
-
-RPAREN : ")" ;
-
-PRICE : "price" INEQ NUM ; 
+EQ : '=' ;
+LTE : '<=' ;
+LT : '<' ;
+GT : '>' ;
+GTE : '>=' ;

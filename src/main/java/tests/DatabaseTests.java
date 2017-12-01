@@ -1,11 +1,18 @@
 package tests;
 
+import static org.junit.Assert.*;
+
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringBufferInputStream;
 import java.net.URL;
 import java.net.URLConnection;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -35,14 +42,6 @@ public class DatabaseTests {
 
 		br.close();
 
-	}
-
-	@Test
-	public void testKCluster() throws IOException {
-		YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmo9tXwh9lYalidf_muOfIGcyx4H1ks5aIm-HwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
-	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
-		db.kMeansClusters_json(4);
 	}
 	
 	@Test
@@ -97,6 +96,42 @@ public class DatabaseTests {
 		else if (split2[0].equals("ADDUSER")) System.out.println(db.addUser(split2[1]));
 		else if (split2[0] == "ADDRESTAURANT") System.out.println(db.addRestaurant(split2[1]));
 		else if (split2[0].equals("ADDREVIEW")) System.out.println(db.addReview(split2[1]));
+	}
+	
+	@Test
+	public void testKClusterSmall() throws IOException {
+		YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurantsSmaller.json?token=AYhesUPTxCuDh5TS06jJweMvyxZLFtLjks5aKmHKwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
+	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
+		
+		db.kMeansClusters_json(2);
+		HashMap<String, Integer> answerTwoClusters = new HashMap<String, Integer> ();
+		answerTwoClusters = db.getkMeans();
+		assertTrue(answerTwoClusters.get("Cafe 3").equals(answerTwoClusters.get("Jasmine Thai")));
+		
+		db.kMeansClusters_json(4);
+		HashMap<String, Integer> answerFourClusters = new HashMap<String, Integer> ();
+		answerFourClusters = db.getkMeans();
+		assertTrue(answerFourClusters.get("Cafe 3").equals(answerFourClusters.get("Jasmine Thai")));	
+	}
+	
+	@Test
+	public void testKClusterLarge() throws IOException {
+		YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=AYheschrw2ihIQQvQBzUzGgogu3ARExTks5aKmkXwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
+	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
+		
+		db.kMeansClusters_json(5);
+		HashMap<String, Integer> answerFiveClusters = new HashMap<String, Integer> ();
+		answerFiveClusters = db.getkMeans();
+		
+		assertTrue(answerFiveClusters.get("The Melt Berkeley").equals(answerFiveClusters.get("Gordo Taqueria")));
+		
+		db.kMeansClusters_json(20);
+		HashMap<String, Integer> answerTwentyClusters = new HashMap<String, Integer> ();
+		answerTwentyClusters = db.getkMeans();
+		
+		assertTrue(answerTwentyClusters.get("The Melt Berkeley").equals(answerTwentyClusters.get("Gordo Taqueria")));	
 	}
 
 }

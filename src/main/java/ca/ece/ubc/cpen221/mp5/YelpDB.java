@@ -36,6 +36,8 @@ public class YelpDB<T> implements MP5Db<T> {
 	private ConcurrentHashMap<String, User> userbyID;
 	private static ConcurrentHashMap<String, Business> businessbyID;
 	private ConcurrentHashMap<String, Review> reviewbyID;
+	
+	private HashMap<String, Integer> kMeansClusters = new HashMap<String, Integer> ();
 
 	public static void main(String[] args) {
 		YelpDB<Restaurant> db = new YelpDB<Restaurant>(
@@ -175,7 +177,6 @@ public class YelpDB<T> implements MP5Db<T> {
 		}
 
 	}
-
 	
 	/**
 	 * Cluster objects into k clusters using k-means clustering
@@ -229,10 +230,8 @@ public class YelpDB<T> implements MP5Db<T> {
 			tempClusters = clustering(centroids); 
 			empty = false;
 			
-			if (one) {
+			if (one)
 				kMeansClusters = tempClusters;
-				one = false;
-			}
 		
 			ArrayList<double[]> newcentroids = new ArrayList<double[]>();
 			
@@ -273,11 +272,12 @@ public class YelpDB<T> implements MP5Db<T> {
 			if(!one && !empty && kMeansClusters.equals(tempClusters))
 				break;
 			
+			one = false;
 			kMeansClusters.clear();
 			kMeansClusters = tempClusters;
 			centroids = newcentroids;
 		}
-
+		
 		//Constructs string in JSON format for each cluster
 		String json = "[";
 		int cluster = 0;
@@ -285,6 +285,7 @@ public class YelpDB<T> implements MP5Db<T> {
 		
 		for(HashSet<Business> oneCluster: kMeansClusters) {
 			for (Business object: oneCluster) {
+				this.kMeansClusters.put(object.getName(), cluster);
 				json = json.concat("{\"x\": " + Double.toString(object.getCoordinates()[0]) + ", ");
 				json = json.concat("\"y\": " + Double.toString(object.getCoordinates()[1]) + ", ");
 				
@@ -358,6 +359,15 @@ public class YelpDB<T> implements MP5Db<T> {
 		return clusters;
 	}
 
+	/**
+	 * Returns map of each business to its cluseter, used for debugging kClusters
+	 * @return HashMap that has each Business (by name) mapped to its
+	 * 		cluster number
+	 */
+	public HashMap<String, Integer> getkMeans () {
+		return kMeansClusters;
+	}
+	
 	/**
 	 * Calculates squared distance between two Cartesian points
 	 * @param x1, y1

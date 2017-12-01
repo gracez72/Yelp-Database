@@ -15,7 +15,7 @@ public class Business {
 	@Expose
 	private String name;
 	@Expose
-	private final String business_id;
+	private String business_id;
 	@Expose
 	private double longitude;
 	@Expose
@@ -237,5 +237,9 @@ public class Business {
 	 */
 	public double getStars() {
 		return this.stars;
+	}
+	
+	public void setBusinessID() {
+		this.business_id = this.name.hashCode() + this.name + this.latitude + this.longitude;
 	}
 }

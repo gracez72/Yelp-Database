@@ -6,7 +6,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -81,7 +80,7 @@ public class YelpDB<T> implements MP5Db<T> {
 			Gson gson = new Gson();
 			Review review = gson.fromJson(line, Review.class);
 			if (review.getBusinessID() == null | review.getDate() == null | review.getUserID() == null) {
-				return "ERR: NOT_ENOUGH_REVIEW_INFO";
+				return "ERR: INVALID_REVIEW_STRING";
 			} else {
 				reviewbyID.put(review.getReviewID(), review);
 				userbyID.get(review.getUserID()).addReview(review.getReviewID());
@@ -111,7 +110,10 @@ public class YelpDB<T> implements MP5Db<T> {
 			Gson gson = new Gson();
 			Restaurant restaurant = gson.fromJson(line, Restaurant.class);
 			if (restaurant.getCity() == null | restaurant.getCoordinates() == null |
-				restaurant.getName() == null | restaurant.getState() == null) return "ERR:NOT_ENOUGH_RESTAURANT_INFO";
+				restaurant.getName() == null | restaurant.getState() == null) return "ERR: INVALID_RESTAURANT_STRING";
+			
+			restaurant.setBusinessID();
+			System.out.println(restaurant.getBusinessID());
 			businessbyID.put(restaurant.getBusinessID(), restaurant);
 			return gson.toJson(restaurant);
 		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {
@@ -274,31 +276,46 @@ public class YelpDB<T> implements MP5Db<T> {
 	 *         represents the id of an object of type T.
 	 */
 	@Override
-	public ToDoubleBiFunction<MP5Db<T>, String> getPredictorFunction(String user) {
-
+	public ToDoubleBiFunction<MP5Db<T>, String> getPredictorFunction(String user_id) {
+		String user = "KM272ChoRWl9Jvmv2N08ZQ";
 		ArrayList<String> reviewList = userbyID.get(user).getReviewList();
+		System.out.println("Review list: " + userbyID.get(user).getReviewList());
 		List<Integer> x = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
 				.map(review -> review.getBusinessID()).map(business_id -> businessbyID.get(business_id).getPrice())
 				.collect(Collectors.toList());
-
-		List<Integer> y = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
+		for (int i = 0; i < x.size(); i++) {
+			System.out.println("Price: " + x.get(i));
+		}
+		
+		List<Double> y = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
 				.map(review -> review.getStars()).collect(Collectors.toList());
 
+		for (int i = 0; i < y.size(); i++) {
+			System.out.println("Stars: " + y.get(i));
+		}
+		
 		double x_mean = x.stream().reduce(0, Integer::sum) / reviewList.stream().count();
-		double y_mean = y.stream().reduce(0, Integer::sum) / reviewList.stream().count();
-
+		System.out.println(x_mean);
+		double y_mean = y.stream().reduce(0.0, Double::sum) / reviewList.stream().count();
+		System.out.println(y_mean);
 		double Sxx = x.stream().map(x_val -> Math.pow(x_val - x_mean, 2)).reduce(0.0, Double::sum);
+		System.out.println("Sxx: " + Sxx);
 		double Syy = y.stream().map(y_val -> Math.pow(y_val - y_mean, 2)).reduce(0.0, Double::sum);
-
+		System.out.println("Syy: " + Syy);
 		double Sxy = 0;
 
 		for (int i = 0; i < reviewList.stream().count(); i++) {
 			Sxy += (x.get(i) - x_mean) * (y.get(i) - y_mean);
 		}
-
-		double b = Sxy / Sxx;
+		System.out.println("Sxy: " + Sxy);
+		double b;
+		if (Sxx != 0.0) {
+			b = Sxy / Sxx;
+		} else b = 0.0;
+		System.out.println("b: " + b);
 		double a = y_mean - (b * x_mean);
-		double R2 = Math.pow(Sxy, 2) / (Sxx * Syy);
+		System.out.println("a " + a) ;
+		//double R2 = Math.pow(Sxy, 2) / (Sxx * Syy);
 
 		ToDoubleBiFunction<MP5Db<T>, String> fnc = (db,
 				business) -> (a + b * ((Business) db.getBusinessbyID().get(business)).getPrice());

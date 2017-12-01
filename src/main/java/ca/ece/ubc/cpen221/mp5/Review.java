@@ -13,7 +13,7 @@ public class Review {
 	private final String review_id;
 	private final String user_id;
 
-	private int stars;
+	private double stars;
 	private HashMap<String, Integer> votes;
 	private String text;
 	private String date;
@@ -36,7 +36,7 @@ public class Review {
 	 * @param date
 	 */
 
-	public Review(String business_id, int stars, String review_id, String type, HashMap<String, Integer> votes,
+	public Review(String business_id, double stars, String review_id, String type, HashMap<String, Integer> votes,
 			String text, String date, String user_id) {
 		this.business_id = business_id;
 		this.stars = stars;
@@ -116,7 +116,7 @@ public class Review {
 	 * 
 	 * @return stars
 	 */
-	public int getStars() {
+	public double getStars() {
 		return this.stars;
 	}
 }

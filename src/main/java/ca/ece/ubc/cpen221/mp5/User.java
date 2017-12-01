@@ -1,6 +1,5 @@
 package ca.ece.ubc.cpen221.mp5;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -61,6 +60,11 @@ public class User {
 		
 	}
 	
+	/**
+	 * Constructor that initializes a user with only the user's name
+	 * 
+	 * @param name
+	 */
 	public User (String name) {
 		this.name = name;
 		this.url = "http://www.yelp.com/user_details?userid=" + name.hashCode() + name;
@@ -75,6 +79,10 @@ public class User {
 		this.votes = votes;
 	}
 	
+	/**
+	 * Empty user constructor.
+	 * 
+	 */
 	public User() {
 		this.reviewList = new ArrayList<String>();
 		HashMap<String, Integer> votes = new HashMap<String, Integer>();
@@ -188,4 +196,22 @@ public class User {
 		this.user_id = name.hashCode() + name;
 	}
 
+	/**
+	 * Returns unique hashcode for each user.
+	 * 
+	 * @return hashcode
+	 */
+	public int hashCode() {
+		return (this.user_id.hashCode() + this.name.hashCode()); 
+	}
+	
+	/**
+	 * Returns true if user ids are the same, false otherwise.
+	 * 
+	 * @param User u
+	 * @return users equal?
+	 */
+	public boolean equals(User u) {
+		return this.user_id.equals(u.getUserID());
+	}
 }

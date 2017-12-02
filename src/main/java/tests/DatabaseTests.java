@@ -2,19 +2,13 @@ package tests;
 
 import static org.junit.Assert.*;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.HashMap;
 
 import org.junit.Test;
 
-import com.google.gson.Gson;
 
 import ca.ece.ubc.cpen221.mp5.Business;
 import ca.ece.ubc.cpen221.mp5.Restaurant;
@@ -358,6 +352,42 @@ public class DatabaseTests {
 
 		assertTrue(db.getPredictorFunction("kJS3R2N1pzf59APqO5mxXA").applyAsDouble(db,
 				"1wz7l5OyVoUlvPDRy59ZMA") == 3.857142857142857);
+	}
+	
+	@Test
+	public void testKClusterSmall() throws IOException {
+		YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurantsSmaller.json?token=AYhesUPTxCuDh5TS06jJweMvyxZLFtLjks5aKmHKwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
+	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
+		
+		db.kMeansClusters_json(2);
+		HashMap<String, Integer> answerTwoClusters = new HashMap<String, Integer> ();
+		answerTwoClusters = db.getkMeans();
+		assertTrue(answerTwoClusters.get("Cafe 3").equals(answerTwoClusters.get("Jasmine Thai")));
+		
+		db.kMeansClusters_json(4);
+		HashMap<String, Integer> answerFourClusters = new HashMap<String, Integer> ();
+		answerFourClusters = db.getkMeans();
+		assertTrue(answerFourClusters.get("Cafe 3").equals(answerFourClusters.get("Jasmine Thai")));	
+	}
+	
+	@Test
+	public void testKClusterLarge() throws IOException {
+		YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=AYheschrw2ihIQQvQBzUzGgogu3ARExTks5aKmkXwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
+	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
+		
+		db.kMeansClusters_json(5);
+		HashMap<String, Integer> answerFiveClusters = new HashMap<String, Integer> ();
+		answerFiveClusters = db.getkMeans();
+		
+		assertTrue(answerFiveClusters.get("The Melt Berkeley").equals(answerFiveClusters.get("Gordo Taqueria")));
+		
+		db.kMeansClusters_json(20);
+		HashMap<String, Integer> answerTwentyClusters = new HashMap<String, Integer> ();
+		answerTwentyClusters = db.getkMeans();
+		
+		assertTrue(answerTwentyClusters.get("The Melt Berkeley").equals(answerTwentyClusters.get("Gordo Taqueria")));	
 	}
 
 }

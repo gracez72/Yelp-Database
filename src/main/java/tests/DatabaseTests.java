@@ -5,10 +5,12 @@ import static org.junit.Assert.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.junit.Test;
 
+import com.google.gson.annotations.Expose;
 
 import ca.ece.ubc.cpen221.mp5.Business;
 import ca.ece.ubc.cpen221.mp5.Restaurant;
@@ -19,10 +21,28 @@ import ca.ece.ubc.cpen221.mp5.YelpDBClient;
 import ca.ece.ubc.cpen221.mp5.YelpDBServer;
 
 public class DatabaseTests {
+	// BUSINESS CLASS TEST
 	@Test
 	public void test0() throws IOException {
+		Business b1 = new Business("https://google.com", "Hi", "135gws", 124.4, 167.3, 4,
+				"https://google.com/images", 5, new ArrayList<String>(), "CA", "3rd Frost St.",
+		         true, new ArrayList<String>(), "Vancouver", "restaurant", new ArrayList<String>(), 4.6);
+		assertTrue(b1.isOpen());
+		assertTrue(b1.getURL().equals("https://google.com"));
+		assertTrue(b1.getNeighborhoods().isEmpty());
+		assertTrue(b1.getCategories().isEmpty());
+		assertTrue(b1.getType().equals("restaurant"));
+		assertTrue(b1.getReviewCount() == 5);
+		assertTrue(b1.getStars() == 4.6);
+		assertTrue(b1.getPhotoURL().equals("https://google.com/images"));
+		assertTrue(b1.getCity().equals("Vancouver"));
+		assertTrue(b1.getSchools().isEmpty());
 		
-
+		Restaurant r1 = new Restaurant("https://google.com", "Hi", "135gws", 124.4, 167.3, 4,
+				"https://google.com/images", 5, new ArrayList<String>(), "CA", "3rd Frost St.",
+		         true, new ArrayList<String>(), "Vancouver", "restaurant", new ArrayList<String>(), 4.6);
+		
+		assertTrue(b1.equals(r1));
 	}
 
 	@Test
@@ -185,8 +205,7 @@ public class DatabaseTests {
 					y = client2.getReply();
 					result = y;
 					assertTrue(result.equals(
-							"Reply: {\"open\":true,\"url\":\"http://www.yelp.com/biz/bearsandcats-ramen-house-berkeley\",\"longitude\":-122.2580151,\"business_id\":\"1384591796Bear and Cat\\u0027s Ramen House37.8680531-122.2580151\",\"name\":\"Bear and Cat\\u0027s Ramen House\",\"categories\":[\"Korean\",\"Restaurants\"],\"state\":\"CA\",\"type\":\"business\",\"stars\":0.0,\"city\":\"Berkeley\",\"full_address\":\"2521 Durant Ave\\nTelegraph Ave\\nBerkeley, CA 94701\",\"review_count\":225,\"photo_url\":\"http://s3-media2.ak.yelpcdn.com/bphoto/BFEn7l4opMgRDeZ6ak7rcQ/ms.jpg\",\"schools\":[\"University of California at Berkeley\"],\"latitude\":37.8680531,\"price\":2}\r\n" + 
-							""));
+							"Reply: {\"open\":true,\"url\":\"http://www.yelp.com/biz/bearsandcats-ramen-house-berkeley\",\"longitude\":-122.2580151,\"business_id\":\"1384591796Bear and Cat\\u0027s Ramen House37.8680531-122.2580151\",\"name\":\"Bear and Cat\\u0027s Ramen House\",\"categories\":[\"Korean\",\"Restaurants\"],\"state\":\"CA\",\"type\":\"business\",\"stars\":0.0,\"city\":\"Berkeley\",\"full_address\":\"2521 Durant Ave\\nTelegraph Ave\\nBerkeley, CA 94701\",\"review_count\":225,\"photo_url\":\"http://s3-media2.ak.yelpcdn.com/bphoto/BFEn7l4opMgRDeZ6ak7rcQ/ms.jpg\",\"schools\":[\"University of California at Berkeley\"],\"latitude\":37.8680531,\"price\":2}"));
 
 					// No full address
 					client2.sendRequest(
@@ -220,7 +239,7 @@ public class DatabaseTests {
 					y = client2.getReply();
 					result = y;
 					assertTrue(result.equals(
-							"Reply: {\"open\": true, \"url\": \"http://www.yelp.com/biz/alborz-berkeley\", \"longitude\": -122.266645, \"neighborhoods\": [\"Downtown Berkeley\", \"UC Campus Area\"], \"business_id\": \"HXni0_SFPT1jAoH-Sm78Jg\", \"name\": \"Alborz\", \"categories\": [\"Persian/Iranian\", \"Restaurants\"], \"state\": \"CA\", \"type\": \"business\", \"stars\": 3.5, \"city\": \"Berkeley\", \"full_address\": \"2142 Center St\\nDowntown Berkeley\\nBerkeley, CA 94704\", \"review_count\": 172, \"photo_url\": \"http://s3-media2.ak.yelpcdn.com/bphoto/YOmjJWRKPMmgv4ctkNkBoA/ms.jpg\", \"schools\": [\"University of California at Berkeley\"], \"latitude\": 37.8701999, \"price\": 4}"));
+							"Reply: {\"open\":true,\"url\":\"http://www.yelp.com/biz/alborz-berkeley\",\"longitude\":-122.266645,\"neighborhoods\":[\"Downtown Berkeley\",\"UC Campus Area\"],\"business_id\":\"HXni0_SFPT1jAoH-Sm78Jg\",\"name\":\"Alborz\",\"categories\":[\"Persian/Iranian\",\"Restaurants\"],\"state\":\"CA\",\"type\":\"business\",\"stars\":3.5,\"city\":\"Berkeley\",\"full_address\":\"2142 Center St\\nDowntown Berkeley\\nBerkeley, CA 94704\",\"review_count\":172,\"photo_url\":\"http://s3-media2.ak.yelpcdn.com/bphoto/YOmjJWRKPMmgv4ctkNkBoA/ms.jpg\",\"schools\":[\"University of California at Berkeley\"],\"latitude\":37.8701999,\"price\":4}"));
 
 					client2.sendRequest("end");
 					y = client2.getReply();
@@ -308,8 +327,10 @@ public class DatabaseTests {
 					y = client3.getReply();
 					result = y;
 					assertTrue(result.equals(
-							"Reply: {\"business_id\":\"1CBs84C-a-cuA3vncXVSAw\",\"review_id\":\"DG8LX-iRbWlrcoiIOVW-Bw\",\"user_id\":\"MY9ht7Fw_ER3dJ7baYjcxw\",\"stars\":4.0,\"text\":\"Extra Large Athenian for pick-up please!!!!\\n\\nI wish they delivered to downtown Oakland.\",\"date\":\"2011-09-28\",\"type\":\"review\"}"));
+							"Reply: {\"type\":\"review\",\"business_id\":\"1CBs84C-a-cuA3vncXVSAw\",\"review_id\":\"DG8LX-iRbWlrcoiIOVW-Bw\",\"text\":\"Extra Large Athenian for pick-up please!!!!\\n\\nI wish they delivered to downtown Oakland.\",\"stars\":4.0,\"user_id\":\"MY9ht7Fw_ER3dJ7baYjcxw\",\"date\":\"2011-09-28\"}"));
 
+					
+					
 					client3.sendRequest(
 							"ADDREVIEW {\"type\": \"review\", \"votes\": {\"cool\": 0, \"useful\": 0, \"funny\": 0}, \"review_id\": \"DG8LX-iRbWlrcoiIOVW-Bw\", \"text\": \"Extra Large Athenian for pick-up please!!!!\\n\\nI wish they delivered to downtown Oakland.\", \"stars\": 4, \"user_id\": \"MY9ht7Fw_ER3dJ7baYjcxw\", \"date\": \"2011-09-28\"}");
 					y = client3.getReply();

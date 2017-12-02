@@ -10,22 +10,39 @@ import com.google.gson.annotations.Expose;
  */
 
 public class Business {
+	@Expose
 	private boolean open;
+	@Expose
 	private String url;
+	@Expose
 	private double longitude;
+	@Expose
 	private ArrayList<String> neighborhoods;
+	@Expose
 	private String business_id;
+	@Expose
 	private String name;
+	@Expose
 	private ArrayList<String> categories;
+	@Expose
 	private String state;
+	@Expose
 	private String type;
+	@Expose
 	private double stars;
+	@Expose
 	private String city;
+	@Expose
 	private String full_address;
+	@Expose
 	private int review_count;
+	@Expose
 	private String photo_url;
+	@Expose
 	private ArrayList<String> schools;
+	@Expose
 	private double latitude;
+	@Expose
 	private int price;
 	
 	

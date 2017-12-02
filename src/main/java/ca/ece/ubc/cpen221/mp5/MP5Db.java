@@ -1,5 +1,5 @@
 package ca.ece.ubc.cpen221.mp5;
-s
+
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToDoubleBiFunction;

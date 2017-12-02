@@ -13,23 +13,13 @@ import com.google.gson.annotations.Expose;
  */
 
 public class User {
-	@Expose
 	private String url;
-	@Expose
-	private int review_count;
-	@Expose
-	private String type;
-	@Expose
-	private static final ArrayList<String> categories = new ArrayList<String>(Arrays.asList("funny", "useful", "cool"));
-	@Expose
 	private HashMap<String, Integer> votes;
-	@Expose
+	private int review_count;
+	private String type;
 	private String user_id;
-	@Expose
 	private String name;
-	@Expose
 	private double average_stars;
-	@Expose
 	private ArrayList<String> reviewList;
 	
 	/**
@@ -207,6 +197,7 @@ public class User {
 	
 	/**
 	 * Returns true if user ids are the same, false otherwise.
+	 * Assumes that each unique user has a unique user_id
 	 * 
 	 * @param User u
 	 * @return users equal?

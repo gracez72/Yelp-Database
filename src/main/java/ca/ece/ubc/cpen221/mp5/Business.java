@@ -10,40 +10,26 @@ import com.google.gson.annotations.Expose;
  */
 
 public class Business {
-	@Expose
-	private String url;
-	@Expose
-	private String name;
-	@Expose
-	private String business_id;
-	@Expose
-	private double longitude;
-	@Expose
-	private double latitude;
-	@Expose
-	private int price;
-	@Expose
-	private double stars;
-	@Expose
 	private boolean open;
-	@Expose
-	private ArrayList<String> neighbourhoods;
-	@Expose
-	private String type;
-	@Expose
-	private String state;
-	@Expose
-	private String city;
-	@Expose
-	private String full_address;
-	@Expose
-	private String photo_url;
-	@Expose
-	private ArrayList<String> schools;
-	@Expose
-	private int review_count;
-	@Expose
+	private String url;
+	private double longitude;
+	private ArrayList<String> neighborhoods;
+	private String business_id;
+	private String name;
 	private ArrayList<String> categories;
+	private String state;
+	private String type;
+	private double stars;
+	private String city;
+	private String full_address;
+	private int review_count;
+	private String photo_url;
+	private ArrayList<String> schools;
+	private double latitude;
+	private int price;
+	
+	
+	
 	
 	/**
 	 * Business constructor initializes all characteristics of a business.
@@ -67,7 +53,7 @@ public class Business {
 	 */
 	public Business (String url, String name, String business_id, double longitude, double latitude, int price,
 			         String photo_url, int review_count, ArrayList<String> schools, String state, String full_address,
-			         boolean open, ArrayList<String> neighbourhoods, String city, String type, ArrayList<String> categories, double stars) {
+			         boolean open, ArrayList<String> neighborhoods, String city, String type, ArrayList<String> categories, double stars) {
 		this.url = url;
 		this.name = name;
 		this.business_id = business_id;
@@ -82,7 +68,7 @@ public class Business {
 		this.state = state;
 		this.full_address = full_address;
 		this.open = open;
-		this.neighbourhoods = neighbourhoods;
+		this.neighborhoods = neighborhoods;
 		this.city = city;
 		this.type = type;
 		this.categories = categories;
@@ -145,8 +131,8 @@ public class Business {
 	 * 
 	 * @return neighbourhoods
 	 */
-	public ArrayList<String> getNeighbourhoods() {
-		return this.neighbourhoods;
+	public ArrayList<String> getNeighborhoods() {
+		return this.neighborhoods;
 	}
 	
 	/**
@@ -239,7 +225,32 @@ public class Business {
 		return this.stars;
 	}
 	
+	/**
+	 * Sets business id.
+	 * 
+	 * MODIFIES: Business id 
+	 */
 	public void setBusinessID() {
 		this.business_id = this.name.hashCode() + this.name + this.latitude + this.longitude;
+	}
+	
+	/**
+	 * Returns the hashcode of the Business.
+	 * 
+	 * @return hashcode 
+	 */
+	public int hashCode() {
+		return this.business_id.hashCode();
+	}
+	
+	/**
+	 * Returns true if the given Business is equal to Business object.
+	 * Assumes each unique Business has a unique hashcode.
+	 * 
+	 * @param Business b
+	 * @return true if equal, false otherwise. 
+	 */
+	public boolean equals(Business b) {
+		return this.business_id.equals(b.getBusinessID());
 	}
 }

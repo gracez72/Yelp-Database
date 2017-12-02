@@ -9,11 +9,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 /**
- * DBServer is a server that handles request from a client using the YelpDB. It
- * accepts requests of the form: Request ::= Number "\n" Number ::= [0-9]+ and
- * for each request, returns a reply of the form: Reply ::= (Number | "err")
- * "\n" where a Number is the request Fibonacci number, or "err" is used to
- * indicate a misformatted request. DBServer can handle multiple concurrent
+ * DBServer is a server that handles request from a client using the YelpDB. 
+ * DBServer can handle multiple concurrent
  * clients.
  * 
  * FORMAT FROM: FIBONACCISERVER EXAMPLE
@@ -100,7 +97,6 @@ public class YelpDBServer {
 			
 			for (String line = in.readLine(); line != null; line = in.readLine()) {
 				System.err.println("request: " + line.toString());
-				try {
 					String reply = "ERR: ILLEGAL_REQUEST";
 					String[] split = line.split("\\s+");
 
@@ -121,16 +117,7 @@ public class YelpDBServer {
 					} else if (split[0].equals("end"))
 						reply = "Closing client...";
 					out.println(reply);
-					System.err.println("reply: " + reply);
-
-				} catch (NullPointerException e) {
-					// complain about ill-formatted request
-					System.err.println("reply: err");
-					out.print("err\n");
-				}
-				// important! our PrintWriter is auto-flushing, but if it were
-				// not:
-				// out.flush();
+					System.err.println(reply);
 			}
 		} finally {
 			out.close();
@@ -145,8 +132,8 @@ public class YelpDBServer {
 		try {
 			YelpDBServer server = new YelpDBServer(Integer.parseInt(args[0]));
 			server.serve();
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (IOException | ArrayIndexOutOfBoundsException| NumberFormatException e) {
+			System.out.println("Please enter a port number.");
 		}
 	}
 }

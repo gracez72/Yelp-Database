@@ -70,54 +70,72 @@ public class YelpDB<T> implements MP5Db<T> {
 		else {
 			Business restaurant = businessbyID.get(businessID);
 			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-			return gson.toJson(restaurant);
+			return "Reply: " + gson.toJson(restaurant);
 		}
 
 	}
-
+/**
+ * REQUIRES REVIEW HAVE BUSINESS ID, REVIEW ID, USER ID, DATE, TEXT or returns ERR: INVALID_USER_STRING
+ * @param line
+ * @return
+ */
 	public String addReview(String line) {
 		try {
 			Gson gson = new Gson();
 			Review review = gson.fromJson(line, Review.class);
-			if (review.getBusinessID() == null | review.getDate() == null | review.getUserID() == null) {
-				return "ERR: INVALID_REVIEW_STRING";
-			} else {
-				reviewbyID.put(review.getReviewID(), review);
-				userbyID.get(review.getUserID()).addReview(review.getReviewID());
-				return gson.toJson(review);
-			}
-		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {
+			if (review.getBusinessID() == null | review.getReviewID() == null | review.getUserID() == null|
+				review.getDate() == null | review.getText() == null) return "ERR: INVALID_REVIEW_STRING";
+			reviewbyID.put(review.getReviewID(), review);
+			userbyID.get(review.getUserID()).addReview(review.getReviewID());
+			return "Reply: " + gson.toJson(review);
+
+		} catch (NullPointerException | ClassCastException | JsonSyntaxException d) {
 			return "ERR: NO_SUCH_REVIEW";
 		}
-
 	}
-
+	/**
+	 * Adds a user using information given from Client input to database.
+	 * 
+	 * @param line
+	 * @return Json formatted string representing user information or error message
+	 */
 	public String addUser(String line) {
 		try {
 			Gson gson = new Gson();
 			User user = gson.fromJson(line, User.class);
-			if (user.getName() == null) return "ERR:NOT_ENOUGH_USER_INFO";
+			if (user.getName() == null) return "ERR: INVALID_USER_STRING";
 			user.setuser_id();
 			userbyID.put(user.getUserID(), user);
-			return gson.toJson(user);
+			return "Reply: " + gson.toJson(user);
 		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {
 			return "ERR: NO_SUCH_USER";
 		}
 	}
 
+	/**
+	 * Adds a restaurant using information given from Client input to database.
+	 * 
+	 * ASSUMPTIONS: IF NO COORDINATES ARE GIVEN, THE DEFAULT VALUES ARE 0.0
+	 * REQUIRES RESTAURANT HAVE A BUSINESS ID, NAME, STATE, ADDRESS
+	 * @param line
+	 * @return Json formatted string representing restaurant information or error message
+	 * 
+	 * 			RETURNS ERR: NO_SUCH_RESTAURANT if no information is given
+	 * 			RETURNS ERR: INVALID_RESTAURANT_STRING if information is missing
+	 */
 	public String addRestaurant(String line) {
 		try {
 			Gson gson = new Gson();
 			Restaurant restaurant = gson.fromJson(line, Restaurant.class);
-			if (restaurant.getCity() == null | restaurant.getCoordinates() == null |
-				restaurant.getName() == null | restaurant.getState() == null) return "ERR: INVALID_RESTAURANT_STRING";
-			
+			if (restaurant.getBusinessID() == null | restaurant.getName() == null | restaurant.getState() == null | 
+			    restaurant.getFullAddress() == null) return "ERR: INVALID_RESTAURANT_STRING";
 			restaurant.setBusinessID();
-			System.out.println(restaurant.getBusinessID());
 			businessbyID.put(restaurant.getBusinessID(), restaurant);
-			return gson.toJson(restaurant);
-		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {
+			return "Reply: " + gson.toJson(restaurant);
+		} catch (NullPointerException | ClassCastException b) {
 			return "ERR: NO_SUCH_RESTAURANT";
+		} catch (JsonSyntaxException c) {
+			return "ERR: INVALID_RESTAURANT_STRING";
 		}
 
 	}
@@ -276,45 +294,29 @@ public class YelpDB<T> implements MP5Db<T> {
 	 *         represents the id of an object of type T.
 	 */
 	@Override
-	public ToDoubleBiFunction<MP5Db<T>, String> getPredictorFunction(String user_id) {
-		String user = "KM272ChoRWl9Jvmv2N08ZQ";
+	public ToDoubleBiFunction<MP5Db<T>, String> getPredictorFunction(String user) {
 		ArrayList<String> reviewList = userbyID.get(user).getReviewList();
-		System.out.println("Review list: " + userbyID.get(user).getReviewList());
 		List<Integer> x = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
 				.map(review -> review.getBusinessID()).map(business_id -> businessbyID.get(business_id).getPrice())
 				.collect(Collectors.toList());
-		for (int i = 0; i < x.size(); i++) {
-			System.out.println("Price: " + x.get(i));
-		}
 		
 		List<Double> y = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
 				.map(review -> review.getStars()).collect(Collectors.toList());
-
-		for (int i = 0; i < y.size(); i++) {
-			System.out.println("Stars: " + y.get(i));
-		}
 		
-		double x_mean = x.stream().reduce(0, Integer::sum) / reviewList.stream().count();
-		System.out.println(x_mean);
-		double y_mean = y.stream().reduce(0.0, Double::sum) / reviewList.stream().count();
-		System.out.println(y_mean);
+		double x_mean = (double) x.stream().reduce(0, Integer::sum) / (double)(reviewList.stream().count());
+		double y_mean = y.stream().reduce(0.0, Double::sum) / (double) reviewList.stream().count();
 		double Sxx = x.stream().map(x_val -> Math.pow(x_val - x_mean, 2)).reduce(0.0, Double::sum);
-		System.out.println("Sxx: " + Sxx);
-		double Syy = y.stream().map(y_val -> Math.pow(y_val - y_mean, 2)).reduce(0.0, Double::sum);
-		System.out.println("Syy: " + Syy);
+		//double Syy = y.stream().map(y_val -> Math.pow(y_val - y_mean, 2)).reduce(0.0, Double::sum);
 		double Sxy = 0;
 
 		for (int i = 0; i < reviewList.stream().count(); i++) {
 			Sxy += (x.get(i) - x_mean) * (y.get(i) - y_mean);
 		}
-		System.out.println("Sxy: " + Sxy);
 		double b;
 		if (Sxx != 0.0) {
 			b = Sxy / Sxx;
 		} else b = 0.0;
-		System.out.println("b: " + b);
 		double a = y_mean - (b * x_mean);
-		System.out.println("a " + a) ;
 		//double R2 = Math.pow(Sxy, 2) / (Sxx * Syy);
 
 		ToDoubleBiFunction<MP5Db<T>, String> fnc = (db,

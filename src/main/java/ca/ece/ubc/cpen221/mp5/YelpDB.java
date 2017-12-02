@@ -173,7 +173,7 @@ public class YelpDB<T> implements MP5Db<T> {
 			Gson gson = new Gson();
 			User user = gson.fromJson(line, User.class);
 			if (user.getName() == null) return "ERR: INVALID_USER_STRING";
-			user.setuser_id();
+			user.setuserid();
 			userbyID.put(user.getUserID(), user);
 			return "Reply: " + gson.toJson(user);
 		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {

@@ -190,7 +190,7 @@ public class User {
 	 * @modifies user_id
 	 * @param reviewID
 	 */
-	public void setuser_id() {
+	public void setuserid() {
 		
 		this.user_id = name.hashCode() + name;
 	}

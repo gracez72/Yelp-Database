@@ -51,7 +51,14 @@ public class YelpDB<T> implements MP5Db<T> {
 	
 	
 	
-	// Yelp DB Constructor
+	/**
+	 * Yelp Database constructor. 
+	 * 		Initializes contents of given files into a database.
+	 * 
+	 * @param businessFile
+	 * @param userFile
+	 * @param reviewFile
+	 */
 	public YelpDB(String businessFile, String userFile, String reviewFile) {
 		try {
 			userbyID = new ConcurrentHashMap<String, User>();
@@ -117,8 +124,11 @@ public class YelpDB<T> implements MP5Db<T> {
 		return null;
 	}
 	
-	
-	
+	/**
+	 * Retrieves business_id -> Business map
+	 * 
+	 * @return Business ConcurrentHashMap
+	 */
 	public ConcurrentHashMap<String, Business> getBusinessbyID() {
 		return this.businessbyID;
 	}
@@ -202,8 +212,11 @@ public class YelpDB<T> implements MP5Db<T> {
 	/**
 	 * Cluster objects into k clusters using k-means clustering
 	 * 
+	 * REP INVARIANT: businessesbyID is never null
+	 * 
 	 * @param k
 	 *            number of clusters to create (0 < k <= number of objects)
+	 *            requires k is not null 
 	 * @return a String, in JSON format, that represents the clusters
 	 * @throws IOException 
 	 */
@@ -405,6 +418,13 @@ public class YelpDB<T> implements MP5Db<T> {
 	}
 
 	/**
+	 * Implements a least-squares linear regression to approximate
+	 * 		the relationship between price and rating of a restaurant.
+	 * 
+	 * REP INVARIANT: businessbyID is never null
+	 * 				  Restaurants, users, and reviews are never modified
+	 * 
+	 * PRECONDITION: requires used to have made at least one review
 	 * 
 	 * @param user
 	 *            represents a user_id in the database
@@ -445,7 +465,13 @@ public class YelpDB<T> implements MP5Db<T> {
 
 	}
 
-	// JSON Parser
+	/**
+	 * Parses JSON files given string of type of object in JSON format.
+	 * 
+	 * @param url
+	 * @param objtype
+	 * @throws IOException if file is not found
+	 */
 	public void ParseJSON(String url, String objtype) throws IOException {
 		URL filename = new URL(url);
 		URLConnection fn = filename.openConnection();

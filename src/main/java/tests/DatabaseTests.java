@@ -10,7 +10,6 @@ import java.util.HashMap;
 
 import org.junit.Test;
 
-import com.google.gson.annotations.Expose;
 
 import ca.ece.ubc.cpen221.mp5.Business;
 import ca.ece.ubc.cpen221.mp5.Restaurant;

@@ -245,9 +245,11 @@ public class Business {
 	/**
 	 * Sets business id.
 	 * 
-	 * MODIFIES: Business id 
+	 * ASSUMES EACH BUSINESS HAS AN UNIQUE LONGITUDE AND LATITUDE
+	 * @modifies business_id 
 	 */
 	public void setBusinessID() {
+		
 		this.business_id = this.name.hashCode() + this.name + this.latitude + this.longitude;
 	}
 	

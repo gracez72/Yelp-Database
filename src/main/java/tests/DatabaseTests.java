@@ -45,6 +45,20 @@ public class DatabaseTests {
 		assertTrue(b1.equals(r1));
 	}
 
+	// REVIEW CLASS TEST
+	@Test 
+	public void test2() throws IOException {
+		Review r1 = new Review("aeg9", 3.5, "aeraeg9", "review", new HashMap<String, Integer>(),
+				"Not much to say", "12/01/17", "ssaet0ae9"); 
+		Review r2 = new Review ("aeg9", 4.5, "aeraegerr9", "review", new HashMap<String, Integer>(),
+				"Not much to say", "12/01/17", "ssaetw346sdt0ae9");
+		assertTrue(r1.getVotes().isEmpty());
+		assertTrue(r1.hashCode() != r2.hashCode());
+		assertTrue(!r1.equals(r2));
+		
+		
+	}
+	
 	@Test
 	public void testKCluster() throws IOException {
 		YelpDB<Restaurant> db = new YelpDB<Restaurant>(
@@ -80,7 +94,8 @@ public class DatabaseTests {
 		assertTrue(u2.getVotes().isEmpty());
 
 		assertFalse(u1.equals(u2));
-
+		assertTrue(u1.hashCode() != u2.hashCode());
+		
 		HashMap<String, Integer> votes = new HashMap<String, Integer>();
 		votes.put("cool", 2);
 		User u3 = new User("Sally", 5, "SAOUWEA5231bg", "https://random.com", 3.7, "user", votes);
@@ -117,7 +132,8 @@ public class DatabaseTests {
 				YelpDBServer.main(args);
 			}
 		}).start();
-
+		
+		
 		Thread activeClient = new Thread(available);
 		activeClient.start();
 
@@ -139,10 +155,11 @@ public class DatabaseTests {
 					YelpDBClient client;
 					client = new YelpDBClient("localhost", 4949);
 					client.sendRequest("end");
+					
 
 					String y = client.getReply();
 					String result = y;
-					assertTrue(result.equals("Closing client..."));
+					assertTrue(("Closing client...").equals(result));
 
 					client.sendRequest("ADDUSER {\"name\": \"Grace\"}");
 					y = client.getReply();
@@ -160,12 +177,12 @@ public class DatabaseTests {
 					client.sendRequest("ADDUSER {}");
 					y = client.getReply();
 					result = y;
-					assertTrue(result.equals("ERR: INVALID_USER_STRING"));
+					assertTrue(("ERR: INVALID_USER_STRING").equals(result));
 
 					client.sendRequest("ADDUSER {null}");
 					y = client.getReply();
 					result = y;
-					assertTrue(result.equals("ERR: NO_SUCH_USER"));
+					assertTrue(("ERR: NO_SUCH_USER").equals(result));
 
 					client.sendRequest("ADDUSER {null}");
 					y = client.getReply();
@@ -181,6 +198,7 @@ public class DatabaseTests {
 					y = client.getReply();
 					result = y;
 					assertTrue(result.equals("ERR: NO_SUCH_REVIEW"));
+					
 
 					client.close();
 

@@ -2,6 +2,8 @@ package ca.ece.ubc.cpen221.mp5;
 
 import java.util.HashMap;
 
+
+
 /**
  * Review - a datatype that represents a review.
  *
@@ -126,6 +128,7 @@ public class Review {
 	 */
 	public int hashCode() {
 		return this.review_id.hashCode();
+		
 	}
 	
 	/**

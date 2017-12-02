@@ -1,7 +1,6 @@
 package ca.ece.ubc.cpen221.mp5;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import com.google.gson.annotations.Expose;
@@ -13,13 +12,21 @@ import com.google.gson.annotations.Expose;
  */
 
 public class User {
+	@Expose
 	private String url;
+	@Expose
 	private HashMap<String, Integer> votes;
+	@Expose
 	private int review_count;
+	@Expose
 	private String type;
+	@Expose
 	private String user_id;
+	@Expose
 	private String name;
+	@Expose
 	private double average_stars;
+	@Expose
 	private ArrayList<String> reviewList;
 	
 	/**
@@ -97,7 +104,7 @@ public class User {
 		this.user_id = user_id;
 		this.review_count = review_count;
 		this.average_stars = average_stars;
-		this.type = "user";
+		this.type = type;
 		this.votes = votes;
 		this.name = name;
 		this.reviewList = new ArrayList<String>();
@@ -180,9 +187,11 @@ public class User {
 	/**
 	 * Adds review ID to reviewList.
 	 * 
+	 * @modifies user_id
 	 * @param reviewID
 	 */
 	public void setuser_id() {
+		
 		this.user_id = name.hashCode() + name;
 	}
 

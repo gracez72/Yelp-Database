@@ -1,49 +1,47 @@
 package ca.ece.ubc.cpen221.mp5;
 
 import java.util.ArrayList;
-
 import com.google.gson.annotations.Expose;
 
 /**
  * Business - a datatype that represents a business.
  *
  */
-
 public class Business {
-	@Expose
-	private String url;
-	@Expose
-	private String name;
-	@Expose
-	private final String business_id;
-	@Expose
-	private double longitude;
-	@Expose
-	private double latitude;
-	@Expose
-	private int price;
-	@Expose
-	private double stars;
 	@Expose
 	private boolean open;
 	@Expose
+	private String url;
+	@Expose
+	private double longitude;
+	@Expose
 	private ArrayList<String> neighborhoods;
+	@Expose
+	private String business_id;
+	@Expose
+	private String name;
+	@Expose
+	private ArrayList<String> categories;
+	@Expose
+	private String state;
 	@Expose
 	private String type;
 	@Expose
-	private String state;
+	private double stars;
 	@Expose
 	private String city;
 	@Expose
 	private String full_address;
 	@Expose
+	private int review_count;
+	@Expose
 	private String photo_url;
 	@Expose
 	private ArrayList<String> schools;
 	@Expose
-	private int review_count;
+	private double latitude;
 	@Expose
-	private ArrayList<String> categories;
+	private int price;
 	
 	/**
 	 * Business constructor initializes all characteristics of a business.
@@ -95,7 +93,6 @@ public class Business {
 	 * @return double array with coordinates[0] as latitude 
 	 *                       and coordinates[1] as longitude
 	 */
-	
 	public double[] getCoordinates() {
 		double[] coordinates = new double[2];
 		coordinates[0] = latitude;
@@ -156,7 +153,7 @@ public class Business {
 	 * 
 	 * @return neighbourhoods
 	 */
-	public ArrayList<String> getNeighbourhoods() {
+	public ArrayList<String> getNeighborhoods() {
 		return this.neighborhoods;
 	}
 	
@@ -166,7 +163,7 @@ public class Business {
 	 * 
 	 * @return neighbourhoods
 	 */
-	public ArrayList<String> getFormattedNeighbourhoods() {
+	public ArrayList<String> getFormattedNeighborhoods() {
 		ArrayList<String> formattedNeighbourhoods = new ArrayList<String> ();
 
 		for (String neighbourhood: neighborhoods) {
@@ -278,5 +275,36 @@ public class Business {
 	 */
 	public double getStars() {
 		return this.stars;
+	}
+	
+	/**
+	 * Sets business id.
+	 * 
+	 * ASSUMES EACH BUSINESS HAS AN UNIQUE LONGITUDE AND LATITUDE
+	 * @modifies business_id 
+	 */
+	public void setBusinessID() {
+		
+		this.business_id = this.name.hashCode() + this.name + this.latitude + this.longitude;
+	}
+	
+	/**
+	 * Returns the hashcode of the Business.
+	 * 
+	 * @return hashcode 
+	 */
+	public int hashCode() {
+		return this.business_id.hashCode();
+	}
+	
+	/**
+	 * Returns true if the given Business is equal to Business object.
+	 * Assumes each unique Business has a unique hashcode.
+	 * 
+	 * @param Business b
+	 * @return true if equal, false otherwise. 
+	 */
+	public boolean equals(Business b) {
+		return this.business_id.equals(b.getBusinessID());
 	}
 }

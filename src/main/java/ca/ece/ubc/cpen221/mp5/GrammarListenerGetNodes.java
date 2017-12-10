@@ -94,7 +94,6 @@ public class GrammarListenerGetNodes extends GrammarBaseListener {
 		while (!tempstack.isEmpty())
 			stack.push(tempstack.pop());
 		
-		System.err.println(stack);
 		return stack;
 	}
 	

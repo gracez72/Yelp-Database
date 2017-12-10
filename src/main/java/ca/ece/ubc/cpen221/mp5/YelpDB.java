@@ -39,11 +39,16 @@ public class YelpDB<T> implements MP5Db<T> {
 	private ConcurrentHashMap<String, Review> reviewbyID;
 	private ArrayList<Business> businesses = new ArrayList<Business> ();
 	
-	private HashMap<String, Integer> kMeansClusters = new HashMap<String, Integer> ();
+	private HashMap<String, Integer> kMeansClusters = new HashMap<String, Integer> ();	
 	
-	
-	
-	// Yelp DB Constructor
+	/**
+	 * Yelp Database constructor. 
+	 * 		Initializes contents of given files into a database.
+	 * 
+	 * @param businessFile
+	 * @param userFile
+	 * @param reviewFile
+	 */
 	public YelpDB(String businessFile, String userFile, String reviewFile) {
 		try {
 			userbyID = new ConcurrentHashMap<String, User>();
@@ -53,11 +58,10 @@ public class YelpDB<T> implements MP5Db<T> {
 			ParseJSON(businessFile, "business");
 			ParseJSON(userFile, "user");
 			ParseJSON(reviewFile, "review");
-			
+
 		} catch (IOException e) {
 			System.out.println("ERROR: filenames not found.");
 		}
-
 	}
 
 	/**
@@ -93,7 +97,7 @@ public class YelpDB<T> implements MP5Db<T> {
 	
 			Set<Business> currentFilter = new HashSet<Business> ();
 			if (operation.equals("I"))
-				currentFilter = businesses.stream().filter(x -> x.getFormattedNeighbourhoods().contains(condition))
+				currentFilter = businesses.stream().filter(x -> x.getFormattedNeighborhoods().contains(condition))
 						.collect(Collectors.toSet());
 
 			if (operation.equals("C"))
@@ -225,8 +229,11 @@ public class YelpDB<T> implements MP5Db<T> {
 		return null;
 	}
 	
-	
-	
+	/**
+	 * Retrieves business_id -> Business map
+	 * 
+	 * @return Business ConcurrentHashMap
+	 */
 	public ConcurrentHashMap<String, Business> getBusinessbyID() {
 		return this.businessbyID;
 	}
@@ -237,52 +244,72 @@ public class YelpDB<T> implements MP5Db<T> {
 		else {
 			Business restaurant = businessbyID.get(businessID);
 			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-			return gson.toJson(restaurant);
+			return "Reply: " + gson.toJson(restaurant);
 		}
 
 	}
-
+/**
+ * REQUIRES REVIEW HAVE BUSINESS ID, REVIEW ID, USER ID, DATE, TEXT or returns ERR: INVALID_USER_STRING
+ * @param line
+ * @return
+ */
 	public String addReview(String line) {
 		try {
 			Gson gson = new Gson();
 			Review review = gson.fromJson(line, Review.class);
-			if (review.getBusinessID() == null | review.getDate() == null | review.getUserID() == null) {
-				return "ERR: NOT_ENOUGH_REVIEW_INFO";
-			} else {
-				reviewbyID.put(review.getReviewID(), review);
-				userbyID.get(review.getUserID()).addReview(review.getReviewID());
-				return gson.toJson(review);
-			}
-		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {
+			if (review.getBusinessID() == null | review.getReviewID() == null | review.getUserID() == null|
+				review.getDate() == null | review.getText() == null) return "ERR: INVALID_REVIEW_STRING";
+			reviewbyID.put(review.getReviewID(), review);
+			userbyID.get(review.getUserID()).addReview(review.getReviewID());
+			return "Reply: " + gson.toJson(review);
+
+		} catch (NullPointerException | ClassCastException | JsonSyntaxException d) {
 			return "ERR: NO_SUCH_REVIEW";
 		}
-
 	}
-
+	/**
+	 * Adds a user using information given from Client input to database.
+	 * 
+	 * @param line
+	 * @return Json formatted string representing user information or error message
+	 */
 	public String addUser(String line) {
 		try {
 			Gson gson = new Gson();
 			User user = gson.fromJson(line, User.class);
-			if (user.getName() == null) return "ERR:NOT_ENOUGH_USER_INFO";
-			user.setuser_id();
+			if (user.getName() == null) return "ERR: INVALID_USER_STRING";
+			user.setuserid();
 			userbyID.put(user.getUserID(), user);
-			return gson.toJson(user);
+			return "Reply: " + gson.toJson(user);
 		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {
 			return "ERR: NO_SUCH_USER";
 		}
 	}
 
+	/**
+	 * Adds a restaurant using information given from Client input to database.
+	 * 
+	 * ASSUMPTIONS: IF NO COORDINATES ARE GIVEN, THE DEFAULT VALUES ARE 0.0
+	 * REQUIRES RESTAURANT HAVE A BUSINESS ID, NAME, STATE, ADDRESS
+	 * @param line
+	 * @return Json formatted string representing restaurant information or error message
+	 * 
+	 * 			RETURNS ERR: NO_SUCH_RESTAURANT if no information is given
+	 * 			RETURNS ERR: INVALID_RESTAURANT_STRING if information is missing
+	 */
 	public String addRestaurant(String line) {
 		try {
 			Gson gson = new Gson();
 			Restaurant restaurant = gson.fromJson(line, Restaurant.class);
-			if (restaurant.getCity() == null | restaurant.getCoordinates() == null |
-				restaurant.getName() == null | restaurant.getState() == null) return "ERR:NOT_ENOUGH_RESTAURANT_INFO";
+			if (restaurant.getBusinessID() == null | restaurant.getName() == null | restaurant.getState() == null | 
+			    restaurant.getFullAddress() == null) return "ERR: INVALID_RESTAURANT_STRING";
+			restaurant.setBusinessID();
 			businessbyID.put(restaurant.getBusinessID(), restaurant);
-			businesses.add(restaurant);
-			return gson.toJson(restaurant);
-		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {
+			return "Reply: " + gson.toJson(restaurant);
+		} catch (NullPointerException | ClassCastException b) {
 			return "ERR: NO_SUCH_RESTAURANT";
+		} catch (JsonSyntaxException c) {
+			return "ERR: INVALID_RESTAURANT_STRING";
 		}
 
 	}
@@ -290,8 +317,11 @@ public class YelpDB<T> implements MP5Db<T> {
 	/**
 	 * Cluster objects into k clusters using k-means clustering
 	 * 
+	 * REP INVARIANT: businessesbyID is never null
+	 * 
 	 * @param k
 	 *            number of clusters to create (0 < k <= number of objects)
+	 *            requires k is not null 
 	 * @return a String, in JSON format, that represents the clusters
 	 * @throws IOException 
 	 */
@@ -443,7 +473,9 @@ public class YelpDB<T> implements MP5Db<T> {
 		}
 		
 		//Loop through set of businesses in database and find its closest centroid
-		for (Business current: businesses) { 
+		for (Entry<String, Business> someEntry: businessbyID.entrySet()) { 
+			Business current = someEntry.getValue();
+			
 			double currentDistance = -1.0;
 			double minDistance = Double.MAX_VALUE;
 			double[] closest = new double[2];
@@ -491,6 +523,13 @@ public class YelpDB<T> implements MP5Db<T> {
 	}
 
 	/**
+	 * Implements a least-squares linear regression to approximate
+	 * 		the relationship between price and rating of a restaurant.
+	 * 
+	 * REP INVARIANT: businessbyID is never null
+	 * 				  Restaurants, users, and reviews are never modified
+	 * 
+	 * PRECONDITION: requires used to have made at least one review
 	 * 
 	 * @param user
 	 *            represents a user_id in the database
@@ -501,30 +540,29 @@ public class YelpDB<T> implements MP5Db<T> {
 	 */
 	@Override
 	public ToDoubleBiFunction<MP5Db<T>, String> getPredictorFunction(String user) {
-
 		ArrayList<String> reviewList = userbyID.get(user).getReviewList();
 		List<Integer> x = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
 				.map(review -> review.getBusinessID()).map(business_id -> businessbyID.get(business_id).getPrice())
 				.collect(Collectors.toList());
-
-		List<Integer> y = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
+		
+		List<Double> y = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
 				.map(review -> review.getStars()).collect(Collectors.toList());
-
-		double x_mean = x.stream().reduce(0, Integer::sum) / reviewList.stream().count();
-		double y_mean = y.stream().reduce(0, Integer::sum) / reviewList.stream().count();
-
+		
+		double x_mean = (double) x.stream().reduce(0, Integer::sum) / (double)(reviewList.stream().count());
+		double y_mean = y.stream().reduce(0.0, Double::sum) / (double) reviewList.stream().count();
 		double Sxx = x.stream().map(x_val -> Math.pow(x_val - x_mean, 2)).reduce(0.0, Double::sum);
-		double Syy = y.stream().map(y_val -> Math.pow(y_val - y_mean, 2)).reduce(0.0, Double::sum);
-
+		//double Syy = y.stream().map(y_val -> Math.pow(y_val - y_mean, 2)).reduce(0.0, Double::sum);
 		double Sxy = 0;
 
 		for (int i = 0; i < reviewList.stream().count(); i++) {
 			Sxy += (x.get(i) - x_mean) * (y.get(i) - y_mean);
 		}
-
-		double b = Sxy / Sxx;
+		double b;
+		if (Sxx != 0.0) {
+			b = Sxy / Sxx;
+		} else b = 0.0;
 		double a = y_mean - (b * x_mean);
-		double R2 = Math.pow(Sxy, 2) / (Sxx * Syy);
+		//double R2 = Math.pow(Sxy, 2) / (Sxx * Syy);
 
 		ToDoubleBiFunction<MP5Db<T>, String> fnc = (db,
 				business) -> (a + b * ((Business) db.getBusinessbyID().get(business)).getPrice());
@@ -532,7 +570,13 @@ public class YelpDB<T> implements MP5Db<T> {
 
 	}
 
-	// JSON Parser
+	/**
+	 * Parses JSON files given string of type of object in JSON format.
+	 * 
+	 * @param url
+	 * @param objtype
+	 * @throws IOException if file is not found
+	 */
 	public void ParseJSON(String url, String objtype) throws IOException {
 		URL filename = new URL(url);
 		URLConnection fn = filename.openConnection();
@@ -561,7 +605,5 @@ public class YelpDB<T> implements MP5Db<T> {
 		}
 
 		br.close();
-
 	}
-
 }

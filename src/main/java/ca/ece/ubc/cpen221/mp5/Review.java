@@ -2,22 +2,23 @@ package ca.ece.ubc.cpen221.mp5;
 
 import java.util.HashMap;
 
+
+
 /**
  * Review - a datatype that represents a review.
  *
  */
 
 public class Review {
-
+	private String type = "review";
 	private final String business_id;
-	private final String review_id;
-	private final String user_id;
-
-	private int stars;
 	private HashMap<String, Integer> votes;
+	private final String review_id;
 	private String text;
+	private double stars;
+	private final String user_id;
 	private String date;
-	private String type;
+	
 
 	/**
 	 * Review constructor initializes characteristics of a review.
@@ -36,7 +37,7 @@ public class Review {
 	 * @param date
 	 */
 
-	public Review(String business_id, int stars, String review_id, String type, HashMap<String, Integer> votes,
+	public Review(String business_id, double stars, String review_id, String type, HashMap<String, Integer> votes,
 			String text, String date, String user_id) {
 		this.business_id = business_id;
 		this.stars = stars;
@@ -116,7 +117,28 @@ public class Review {
 	 * 
 	 * @return stars
 	 */
-	public int getStars() {
+	public double getStars() {
 		return this.stars;
+	}
+	
+	/**
+	 * Returns unique hashcode 
+	 * 
+	 * @return hashcode
+	 */
+	public int hashCode() {
+		return this.review_id.hashCode();
+		
+	}
+	
+	/**
+	 * Returns true if reviews are the same.
+	 * Assumes that each unique review has a unique review_id
+	 * 
+	 * @param Review 
+	 * @return true if same review object, false otherwise
+	 */
+	public boolean equals(Review r) {
+		return this.review_id.equals(r.getReviewID());
 	}
 }

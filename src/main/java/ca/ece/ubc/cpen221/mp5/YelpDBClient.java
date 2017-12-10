@@ -17,7 +17,7 @@ public class YelpDBClient {
 	// Rep invariant: socket, in, out != null
 
 	/**
-	 * Make a FibonacciClient and connect it to a server running on hostname at the
+	 * Make a YelpDBClient and connect it to a server running on hostname at the
 	 * specified port.
 	 * 
 	 * @throws IOException
@@ -33,8 +33,7 @@ public class YelpDBClient {
 	/**
 	 * Send a request to the server. Requires this is "open".
 	 * 
-	 * @param x
-	 *            to find Fibonacci(x)
+	 * @param client input
 	 * @throws IOException
 	 *             if network or server failure
 	 */
@@ -47,7 +46,7 @@ public class YelpDBClient {
 	 * Get a reply from the next request that was submitted. Requires this is
 	 * "open".
 	 * 
-	 * @return the requested Fibonacci number
+	 * @return the requested information
 	 * @throws IOException
 	 *             if network or server failure
 	 */
@@ -78,26 +77,26 @@ public class YelpDBClient {
 	}
 
 	/**
-	 * Use a FibonacciServer to find the first N Fibonacci numbers.
+	 * Use a YelpDBClient to initialize Yelp database.
+	 * REQUIRES THAT YELPDBCLIENT IS CALLED WITH PORT NUMBER GIVEN
 	 */
 	public static void main(String[] args) {
 		try {
 			String fromClient = "";
 			YelpDBClient client;
-			if (args.length == 0){client = new YelpDBClient("localhost",4949);}
-			else{client = new YelpDBClient("localhost", Integer.parseInt(args[0]));}
+			client = new YelpDBClient("localhost", Integer.parseInt(args[0]));
 			do {
 				System.out.println("Enter command: ");
 				fromClient = client.stdin.readLine();
 				client.sendRequest(fromClient);
 
 				String y = client.getReply();
-				System.out.println("Reply: " + y);	
+				System.out.println(y);	
 			} while (!fromClient.equals("end"));
 			
 			client.close();
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
+		} catch (IOException | ArrayIndexOutOfBoundsException ioe) {
+			System.out.println("Please enter a port number.");
 		}
 	}
 }

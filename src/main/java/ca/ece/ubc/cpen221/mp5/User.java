@@ -1,8 +1,6 @@
 package ca.ece.ubc.cpen221.mp5;
 
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import com.google.gson.annotations.Expose;
@@ -17,13 +15,11 @@ public class User {
 	@Expose
 	private String url;
 	@Expose
+	private HashMap<String, Integer> votes;
+	@Expose
 	private int review_count;
 	@Expose
 	private String type;
-	@Expose
-	private static final ArrayList<String> categories = new ArrayList<String>(Arrays.asList("funny", "useful", "cool"));
-	@Expose
-	private HashMap<String, Integer> votes;
 	@Expose
 	private String user_id;
 	@Expose
@@ -61,6 +57,11 @@ public class User {
 		
 	}
 	
+	/**
+	 * Constructor that initializes a user with only the user's name
+	 * 
+	 * @param name
+	 */
 	public User (String name) {
 		this.name = name;
 		this.url = "http://www.yelp.com/user_details?userid=" + name.hashCode() + name;
@@ -75,6 +76,10 @@ public class User {
 		this.votes = votes;
 	}
 	
+	/**
+	 * Empty user constructor.
+	 * 
+	 */
 	public User() {
 		this.reviewList = new ArrayList<String>();
 		HashMap<String, Integer> votes = new HashMap<String, Integer>();
@@ -99,7 +104,7 @@ public class User {
 		this.user_id = user_id;
 		this.review_count = review_count;
 		this.average_stars = average_stars;
-		this.type = "user";
+		this.type = type;
 		this.votes = votes;
 		this.name = name;
 		this.reviewList = new ArrayList<String>();
@@ -182,10 +187,31 @@ public class User {
 	/**
 	 * Adds review ID to reviewList.
 	 * 
+	 * @modifies user_id
 	 * @param reviewID
 	 */
-	public void setuser_id() {
+	public void setuserid() {
+		
 		this.user_id = name.hashCode() + name;
 	}
 
+	/**
+	 * Returns unique hashcode for each user.
+	 * 
+	 * @return hashcode
+	 */
+	public int hashCode() {
+		return (this.user_id.hashCode() + this.name.hashCode()); 
+	}
+	
+	/**
+	 * Returns true if user ids are the same, false otherwise.
+	 * Assumes that each unique user has a unique user_id
+	 * 
+	 * @param User u
+	 * @return users equal?
+	 */
+	public boolean equals(User u) {
+		return this.user_id.equals(u.getUserID());
+	}
 }

@@ -34,10 +34,10 @@ public class Restaurant extends Business{
 	 
 	public Restaurant (String url, String name, String business_id, double longitude, double latitude, int price,
 	         String photo_url, int review_count, ArrayList<String> schools, String state, String full_address,
-	         boolean open, ArrayList<String> neighbourhoods, String city, String type, ArrayList<String> categories, double stars) {
+	         boolean open, ArrayList<String> neighborhoods, String city, String type, ArrayList<String> categories, double stars) {
 		
 		super(url, name, business_id,longitude, latitude, price, photo_url,review_count, schools, state, full_address,
-		      open, neighbourhoods,  city, type, categories, stars);
+		      open, neighborhoods,  city, type, categories, stars);
 	}
 
 }

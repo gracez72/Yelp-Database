@@ -3,10 +3,9 @@ grammar Grammar;
 /*
  * Parser Rules
  */
-query : atom (atom | AND | OR)* ;
-atom : in | category | rating | price | name | (LPAREN orexpr RPAREN) ;
-andexpr : atom (AND atom)* ;
-orexpr : andexpr (OR andexpr)* ;
+query : (atom | expr)* ;
+atom : in | category | rating | price | name | (LPAREN expr RPAREN);
+expr : atom ((AND | OR) atom)*;
 
 ineq : GT | GTE | LT | LTE | EQ ;
 in : 'in' LPAREN (WORD | NUM)* RPAREN ;

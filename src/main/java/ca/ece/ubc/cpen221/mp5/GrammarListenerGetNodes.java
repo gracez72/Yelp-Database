@@ -1,163 +1,104 @@
 package ca.ece.ubc.cpen221.mp5;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class GrammarListenerGetNodes extends GrammarBaseListener {
-	private List<String> andExpr = new ArrayList<String> ();
-	private List<String> orExpr = new ArrayList<String> ();
-	
-	private List<String> neighbourhoods = new ArrayList<String> ();
-	private List<String> categories = new ArrayList<String> ();
-	private List<String> names = new ArrayList<String> ();
-	private List<String> prices = new ArrayList<String> ();
-	private List<String> ratings = new ArrayList<String> ();
-	
-	public void exitAndexpr(GrammarParser.AndexprContext ctx) { 
-		List<TerminalNode> token = ctx.AND();
-		String text = "";
-		
-		for (TerminalNode part: token)
-			text = text.concat(part.getText() + " ");
-		
-		text = text.trim();
-		
-		andExpr.add(text);
-	}
-	
-	public void exitOrexpr(GrammarParser.OrexprContext ctx) { 
-		List<TerminalNode> token = ctx.OR();
-		String text = "";
-		
-		for (TerminalNode part: token)
-			text = text.concat(part.getText() + " ");
-		
-		text = text.trim();
-		
-		orExpr.add(text);
-	}
-	
-	public void exitIn(GrammarParser.InContext ctx) { 
-		List<TerminalNode> token = ctx.WORD();
-		String text = "";
-		
-		for(TerminalNode part: token)
-			text = text.concat(part.getText());
-		
-		token = ctx.NUM();
-		for(TerminalNode part: token)
-			text = text.concat(part.getText());
-		
-		neighbourhoods.add(text);
-	}
-	
-	public void exitCategory(GrammarParser.CategoryContext ctx) { 
-		List<TerminalNode> token = ctx.WORD();
-		String text = "";
-		
-		for(TerminalNode part: token)
-			text = text.concat(part.getText());
-		
-		categories.add(text);
-	}
+	private Stack<String> stack = new Stack<String> ();
 
-	public void exitName(GrammarParser.NameContext ctx) { 
-		List<TerminalNode> token = ctx.WORD();
+	private Map<Integer, String> atoms = new HashMap<Integer, String> ();
+	private int counter = 0;
+	
+	
+	/**
+	 * Maps each atom to an integer for easy access.
+	 */
+	public void exitAtom(GrammarParser.AtomContext ctx) { 
+		String text = ctx.getChild(0).getText();
+		String formattedText = "";
+		
+		if (ctx.getChild(0) instanceof GrammarParser.InContext)
+			formattedText = text.replace("in(", "I").replace(")", "");
+
+		else if (ctx.getChild(0) instanceof GrammarParser.CategoryContext)
+			formattedText = text.replace("category(", "C").replace(")", "");
+
+		else if (ctx.getChild(0) instanceof GrammarParser.NameContext)
+			formattedText = text.replace("name(", "N").replace(")", "");
+
+		else if (ctx.getChild(0) instanceof GrammarParser.PriceContext)
+			formattedText = text.replace("price", "P");
+
+		else if (ctx.getChild(0) instanceof GrammarParser.RatingContext)
+			formattedText = text.replace("rating", "R");	
+		
+		if (!formattedText.isEmpty()) {
+			atoms.put(counter, formattedText);
+			stack.push(Integer.toString(counter));
+			counter++;
+		}
+	}
+	
+	public void enterExpr(GrammarParser.ExprContext ctx) {
+		String operation = "";
+		List<TerminalNode> token = ctx.AND();
+		
+		for (TerminalNode part: token) 
+			operation = operation.concat(part.getText());
+		
+		if(operation.equals("")) {
+			token = ctx.OR();
+			for (TerminalNode part: token) 
+				operation = operation.concat(part.getText());
+		}
+		
+		stack.push(operation);
+	}	
+	
+	public void exitExpr(GrammarParser.ExprContext ctx) {
 		String text = "";
+		if (ctx.getParent() instanceof GrammarParser.AtomContext)
+			text = stack.pop().concat("," + stack.pop()).concat("," + stack.pop());
 		
-		for(TerminalNode part: token)
-			text = text.concat(part.getText());
+		if (text.length() != 0)
+			stack.push(text);
+	}	
+	
+	//GETTER METHODS
+	public Stack<String> getStack () {
+		Stack<String> tempstack = new Stack<String> ();
 		
-		names.add(text);
+		while (!stack.isEmpty()) {
+			String unformatted = stack.pop();
+			String[] array = unformatted.split(",");
+			
+			if (array.length == 1 && !(array[0].equals("&&") || array[0].equals("||"))) {
+				tempstack.push(array[0]);
+				tempstack.push(array[0]);
+				tempstack.push("&&");
+			}
+			
+			else if (array.length != 1) {
+				for (String current: array) 
+					tempstack.push(current);
+			}
+			
+			else 
+				tempstack.push(unformatted);
+		}
+		
+		while (!tempstack.isEmpty())
+			stack.push(tempstack.pop());
+		
+		System.err.println(stack);
+		return stack;
 	}
 	
-	public void exitPrice(GrammarParser.PriceContext ctx) { 
-		TerminalNode token = ctx.NUM();
-		GrammarParser.IneqContext ineqCtx = ctx.ineq();
-		String text = "";
-		
-		try {
-			text = text.concat(ineqCtx.EQ().getText());
-		} catch (NullPointerException e) {}
-		
-		try {
-			text = text.concat(ineqCtx.GT().getText());
-		} catch (NullPointerException e) {}
-		
-		try {
-			text = text.concat(ineqCtx.GTE().getText());
-		} catch (NullPointerException e) {}
-		
-		try {
-			text = text.concat(ineqCtx.LT().getText());
-		} catch (NullPointerException e) {}
-		
-		try {
-			text = text.concat(ineqCtx.LTE().getText());
-		} catch (NullPointerException e) {}
-		
-		text = text.concat(token.getText());
-		prices.add(text);
-	}
-	
-	public void exitRating(GrammarParser.RatingContext ctx) { 
-		TerminalNode token = ctx.NUM();
-		GrammarParser.IneqContext ineqCtx = ctx.ineq();
-		String text = "";
-		
-		try {
-			text = text.concat(ineqCtx.EQ().getText());
-		} catch (NullPointerException e) {}
-		
-		try {
-			text = text.concat(ineqCtx.GT().getText());
-		} catch (NullPointerException e) {}
-		
-		try {
-			text = text.concat(ineqCtx.GTE().getText());
-		} catch (NullPointerException e) {}
-		
-		try {
-			text = text.concat(ineqCtx.LT().getText());
-		} catch (NullPointerException e) {}
-		
-		try {
-			text = text.concat(ineqCtx.LTE().getText());
-		} catch (NullPointerException e) {}
-		
-		text = text.concat(token.getText());
-		ratings.add(text);
-	}
-	
-	//Getter methods
-	public List<String> getNeighbourhoods () {
-		return neighbourhoods;
-	}
-	
-	public List<String> getCategories () {
-		return categories;
-	}
-	
-	public List<String> getNames () {
-		return names;
-	}
-	
-	public List<String> getPrices () {
-		return prices;
-	}
-	
-	public List<String> getRatings () {
-		return prices;
-	}
-	
-	public List<String> getAndExpr () {
-		return andExpr;
-	}
-	
-	public List<String> getOrExpr () {
-		return orExpr;
+	public Map<Integer, String> getAtoms () {
+		return atoms;
 	}
 }

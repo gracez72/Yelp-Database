@@ -27,7 +27,7 @@ public class Business {
 	@Expose
 	private boolean open;
 	@Expose
-	private ArrayList<String> neighbourhoods;
+	private ArrayList<String> neighborhoods;
 	@Expose
 	private String type;
 	@Expose
@@ -67,7 +67,7 @@ public class Business {
 	 */
 	public Business (String url, String name, String business_id, double longitude, double latitude, int price,
 			         String photo_url, int review_count, ArrayList<String> schools, String state, String full_address,
-			         boolean open, ArrayList<String> neighbourhoods, String city, String type, ArrayList<String> categories, double stars) {
+			         boolean open, ArrayList<String> neighborhoods, String city, String type, ArrayList<String> categories, double stars) {
 		this.url = url;
 		this.name = name;
 		this.business_id = business_id;
@@ -82,7 +82,7 @@ public class Business {
 		this.state = state;
 		this.full_address = full_address;
 		this.open = open;
-		this.neighbourhoods = neighbourhoods;
+		this.neighborhoods = neighborhoods;
 		this.city = city;
 		this.type = type;
 		this.categories = categories;
@@ -123,6 +123,17 @@ public class Business {
 	}
 	
 	/**
+	 * Returns name of business, with any
+	 * spaces removed in the name.
+	 * 
+	 * @return neighbourhoods
+	 */
+	public String getFormattedName() {
+		String formattedName = this.name.replaceAll(" ", "");
+		return formattedName;
+	}
+	
+	/**
 	 * Returns true if business is open, false otherwise.
 	 * 
 	 * @return open?
@@ -146,7 +157,22 @@ public class Business {
 	 * @return neighbourhoods
 	 */
 	public ArrayList<String> getNeighbourhoods() {
-		return this.neighbourhoods;
+		return this.neighborhoods;
+	}
+	
+	/**
+	 * Returns neighbourhoods of business, with any
+	 * spaces removed in the neighbourhood names.
+	 * 
+	 * @return neighbourhoods
+	 */
+	public ArrayList<String> getFormattedNeighbourhoods() {
+		ArrayList<String> formattedNeighbourhoods = new ArrayList<String> ();
+
+		for (String neighbourhood: neighborhoods) {
+			formattedNeighbourhoods.add(neighbourhood.replace(" ", ""));
+		}
+		return formattedNeighbourhoods;
 	}
 	
 	/**
@@ -159,12 +185,27 @@ public class Business {
 	}
 	
 	/**
-	 * Returns categories business falls under
+	 * Returns categories business falls under.
 	 * 
 	 * @return categories
 	 */
 	public ArrayList<String> getCategories() {
 		return this.categories;
+	}
+	
+	/**
+	 * Returns categories business falls under, with any
+	 * spaces removed in the category names.
+	 * 
+	 * @return categories
+	 */
+	public ArrayList<String> getFormattedCategories() {
+		ArrayList<String> formattedCategories = new ArrayList<String> ();
+		
+		for (String category: categories) {
+			formattedCategories.add(category.replace(" ", ""));
+		}
+		return formattedCategories;
 	}
 	
 	/**

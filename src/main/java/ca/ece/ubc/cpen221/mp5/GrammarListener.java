@@ -28,25 +28,15 @@ public interface GrammarListener extends ParseTreeListener {
 	 */
 	void exitAtom(GrammarParser.AtomContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link GrammarParser#andexpr}.
+	 * Enter a parse tree produced by {@link GrammarParser#expr}.
 	 * @param ctx the parse tree
 	 */
-	void enterAndexpr(GrammarParser.AndexprContext ctx);
+	void enterExpr(GrammarParser.ExprContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link GrammarParser#andexpr}.
+	 * Exit a parse tree produced by {@link GrammarParser#expr}.
 	 * @param ctx the parse tree
 	 */
-	void exitAndexpr(GrammarParser.AndexprContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link GrammarParser#orexpr}.
-	 * @param ctx the parse tree
-	 */
-	void enterOrexpr(GrammarParser.OrexprContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link GrammarParser#orexpr}.
-	 * @param ctx the parse tree
-	 */
-	void exitOrexpr(GrammarParser.OrexprContext ctx);
+	void exitExpr(GrammarParser.ExprContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link GrammarParser#ineq}.
 	 * @param ctx the parse tree

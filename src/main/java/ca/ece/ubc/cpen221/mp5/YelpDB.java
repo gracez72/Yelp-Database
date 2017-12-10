@@ -9,9 +9,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
@@ -22,7 +24,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import org.antlr.v4.tool.Grammar;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.Gson;
@@ -34,20 +35,11 @@ import java.net.URLConnection;
 public class YelpDB<T> implements MP5Db<T> {
 
 	private ConcurrentHashMap<String, User> userbyID;
-	private static ConcurrentHashMap<String, Business> businessbyID;
+	private ConcurrentHashMap<String, Business> businessbyID;
 	private ConcurrentHashMap<String, Review> reviewbyID;
+	private ArrayList<Business> businesses = new ArrayList<Business> ();
 	
 	private HashMap<String, Integer> kMeansClusters = new HashMap<String, Integer> ();
-
-	public static void main(String[] args) {
-		YelpDB<Restaurant> db = new YelpDB<Restaurant>(
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmo9tXwh9lYalidf_muOfIGcyx4H1ks5aIm-HwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
-
-		String query = "in(Terminal Ave) && price < 3";
-		parseQuery(query);
-	}
 	
 	
 	
@@ -61,7 +53,7 @@ public class YelpDB<T> implements MP5Db<T> {
 			ParseJSON(businessFile, "business");
 			ParseJSON(userFile, "user");
 			ParseJSON(reviewFile, "review");
-
+			
 		} catch (IOException e) {
 			System.out.println("ERROR: filenames not found.");
 		}
@@ -75,6 +67,7 @@ public class YelpDB<T> implements MP5Db<T> {
 	 * @param queryString
 	 * @return the set of objects that matches the query
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public Set<T> getMatches(String queryString) {
 		CharStream stream = new ANTLRInputStream(queryString);
@@ -87,33 +80,148 @@ public class YelpDB<T> implements MP5Db<T> {
 		GrammarListenerGetNodes listener = new GrammarListenerGetNodes();
 		walker.walk(listener, tree);
 		
-		Set<Business> businesses = new HashSet<Business> ();
-		for(Entry<String, Business> someentry: businessbyID.entrySet()) {
-			businesses.add(someentry.getValue());
+		Map<Integer, String> atoms = new HashMap <Integer, String> ();
+		atoms = listener.getAtoms();
+		
+		Map<Integer, Set<Business>> filteredByAtom = new HashMap <Integer, Set<Business>> ();
+		
+		for (int counter = 0; counter < atoms.size(); counter++) {
+			String currentAtom = atoms.get(counter);
+			
+			String operation = currentAtom.substring(0, 1);
+			String condition = currentAtom.substring(1);
+	
+			Set<Business> currentFilter = new HashSet<Business> ();
+			if (operation.equals("I"))
+				currentFilter = businesses.stream().filter(x -> x.getFormattedNeighbourhoods().contains(condition))
+						.collect(Collectors.toSet());
+
+			if (operation.equals("C"))
+				currentFilter = businesses.stream().filter(x -> x.getFormattedCategories().contains(condition))
+						.collect(Collectors.toSet());
+
+			if (operation.equals("N"))
+				currentFilter = businesses.stream().filter(x -> x.getFormattedName().contains(condition))
+						.collect(Collectors.toSet());
+
+			if (operation.equals("R")) {
+				if (condition.substring(0, 2).equals("<="))
+					currentFilter = businesses.stream()
+							.filter(x -> x.getStars() <= Integer.parseInt(condition.substring(condition.length() - 1)))
+							.collect(Collectors.toSet());
+
+				else if (condition.substring(0, 2).equals(">="))
+					currentFilter = businesses.stream()
+							.filter(x -> x.getStars() >= Integer.parseInt(condition.substring(condition.length() - 1)))
+							.collect(Collectors.toSet());
+
+				else if (condition.substring(0, 1).equals("="))
+					currentFilter = businesses.stream()
+							.filter(x -> x.getStars() == Integer.parseInt(condition.substring(condition.length() - 1)))
+							.collect(Collectors.toSet());
+
+				else if (condition.substring(0, 1).equals("<"))
+					currentFilter = businesses.stream()
+							.filter(x -> x.getStars() < Integer.parseInt(condition.substring(condition.length() - 1)))
+							.collect(Collectors.toSet());
+
+				else
+					currentFilter = businesses.stream()
+							.filter(x -> x.getStars() > Integer.parseInt(condition.substring(condition.length() - 1)))
+							.collect(Collectors.toSet());
+			}
+
+			if (operation.equals("P")) {
+				if (condition.substring(0, 2).equals("<="))
+					currentFilter = businesses.stream()
+							.filter(x -> x.getPrice() <= Integer.parseInt(condition.substring(condition.length() - 1)))
+							.collect(Collectors.toSet());
+
+				else if (condition.substring(0, 2).equals(">="))
+					currentFilter = businesses.stream()
+							.filter(x -> x.getPrice() >= Integer.parseInt(condition.substring(condition.length() - 1)))
+							.collect(Collectors.toSet());
+
+				else if (condition.substring(0, 1).equals("="))
+					currentFilter = businesses.stream()
+							.filter(x -> x.getPrice() == Integer.parseInt(condition.substring(condition.length() - 1)))
+							.collect(Collectors.toSet());
+
+				else if (condition.substring(0, 1).equals("<"))
+					currentFilter = businesses.stream()
+							.filter(x -> x.getPrice() < Integer.parseInt(condition.substring(condition.length() - 1)))
+							.collect(Collectors.toSet());
+
+				else
+					currentFilter = businesses.stream()
+							.filter(x -> x.getPrice() > Integer.parseInt(condition.substring(condition.length() - 1)))
+							.collect(Collectors.toSet());
+			}
+
+			filteredByAtom.put(counter, currentFilter);
+		}
+
+		Stack<String> stack = new Stack<String> ();
+		stack = listener.getStack();
+		
+		Stack<Set<Business>> tempFilteredSets = new Stack<Set<Business>> ();
+		
+		while (!stack.isEmpty()) {
+			Set<Business> tempFilteredSet = new HashSet<Business> ();
+			
+			String operand = "";
+			int conditionOne = -1;
+			int conditionTwo = -1;
+			if (stack.peek().equals("||") || stack.peek().equals("&&"))
+				operand = stack.pop();
+			
+			else {
+				conditionOne = Integer.parseInt(stack.pop());
+				conditionTwo = Integer.parseInt(stack.pop());
+				operand = stack.pop();
+			}
+			
+			//Filter
+			if (operand.equals("||") && conditionOne == -1) {
+				tempFilteredSet.addAll(tempFilteredSets.pop());
+				tempFilteredSet.addAll(tempFilteredSets.pop());
+				tempFilteredSets.push(tempFilteredSet);
+			}
+			
+			else if (operand.equals("||")) {
+				tempFilteredSet.addAll(filteredByAtom.get(conditionOne));
+				tempFilteredSet.addAll(filteredByAtom.get(conditionTwo));
+				tempFilteredSets.push(tempFilteredSet);
+			}
+			
+			else if (operand.equals("&&") && conditionOne == -1) {
+				Set<Business> tempOne = new HashSet<Business> ();
+				tempOne.addAll(tempFilteredSets.pop());
+				Set<Business> tempTwo = new HashSet<Business> ();
+				tempTwo.addAll(tempFilteredSets.pop());
+				
+				tempFilteredSet = tempOne.stream().filter(x -> tempTwo.contains(x)).collect(Collectors.toSet());
+				tempFilteredSet.addAll(tempTwo.stream().filter(x -> tempOne.contains(x)).collect(Collectors.toSet()));
+				tempFilteredSets.push(tempFilteredSet);
+			}
+			
+			else {
+				Set<Business> tempOne = new HashSet<Business> ();
+				tempOne.addAll(filteredByAtom.get(conditionOne));
+				Set<Business> tempTwo = new HashSet<Business> ();
+				tempTwo.addAll(filteredByAtom.get(conditionTwo));
+				
+				tempFilteredSet = tempOne.stream().filter(x -> tempTwo.contains(x)).collect(Collectors.toSet());
+				tempFilteredSet.addAll(tempTwo.stream().filter(x -> tempOne.contains(x)).collect(Collectors.toSet()));
+				tempFilteredSets.push(tempFilteredSet);
+			}
 		}
 		
-		Set<Business> filteredBusinesses = businesses.stream().filter(x -> x.getNeighbourhoods().contains(listener.getNeighbourhoods().get(0)))
-					.collect(Collectors.toSet());
-		
-			System.out.println(filteredBusinesses);
-		return null;
+		return (Set<T>) tempFilteredSets.pop();
 	}
 	
-	public static String parseQuery(String query) {
-		//Set<T> matches = getMatches(query);
-
-		CharStream stream = new ANTLRInputStream(query);
-		GrammarLexer lexer = new GrammarLexer(stream);
-		TokenStream tokens = new CommonTokenStream(lexer);
-		GrammarParser parser = new GrammarParser(tokens);
-		
-		ParseTree tree = parser.query();
-		ParseTreeWalker walker = new ParseTreeWalker();
-		GrammarListenerGetNodes listener = new GrammarListenerGetNodes();
-		walker.walk(listener, tree);
-
-
-		
+	public String parseQuery(String query) {
+		Set<T> matches = getMatches(query);
 		return null;
 	}
 	
@@ -171,6 +279,7 @@ public class YelpDB<T> implements MP5Db<T> {
 			if (restaurant.getCity() == null | restaurant.getCoordinates() == null |
 				restaurant.getName() == null | restaurant.getState() == null) return "ERR:NOT_ENOUGH_RESTAURANT_INFO";
 			businessbyID.put(restaurant.getBusinessID(), restaurant);
+			businesses.add(restaurant);
 			return gson.toJson(restaurant);
 		} catch (NullPointerException | ClassCastException | JsonSyntaxException c) {
 			return "ERR: NO_SUCH_RESTAURANT";
@@ -334,9 +443,7 @@ public class YelpDB<T> implements MP5Db<T> {
 		}
 		
 		//Loop through set of businesses in database and find its closest centroid
-		for (Entry<String, Business> someEntry: businessbyID.entrySet()) { 
-			Business current = someEntry.getValue();
-			
+		for (Business current: businesses) { 
 			double currentDistance = -1.0;
 			double minDistance = Double.MAX_VALUE;
 			double[] closest = new double[2];
@@ -448,6 +555,7 @@ public class YelpDB<T> implements MP5Db<T> {
 			} else {
 				Business restaurant = gson.fromJson(line, Business.class);
 				businessbyID.put(restaurant.getBusinessID(), restaurant);
+				businesses.add(restaurant);
 			}
 
 		}

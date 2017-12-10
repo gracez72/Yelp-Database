@@ -2,33 +2,27 @@ package tests;
 
 import static org.junit.Assert.*;
 
+
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringBufferInputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 
 import org.junit.Test;
 
 import com.google.gson.Gson;
 
-import ca.ece.ubc.cpen221.mp5.Business;
 import ca.ece.ubc.cpen221.mp5.Restaurant;
 import ca.ece.ubc.cpen221.mp5.Review;
-import ca.ece.ubc.cpen221.mp5.User;
 import ca.ece.ubc.cpen221.mp5.YelpDB;
 
 public class DatabaseTests {
 	@Test
 	public void test0() throws IOException {
 		URL filename = new URL(
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=AYhesUJKUgqJY-XxQbVCPnq-2OQhxBn2ks5aLIGowA%3D%3D");
 		URLConnection fn = filename.openConnection();
 		BufferedReader br = new BufferedReader(new InputStreamReader(fn.getInputStream()));
 		String line;
@@ -109,7 +103,7 @@ public class DatabaseTests {
 		answerTwoClusters = db.getkMeans();
 		assertTrue(answerTwoClusters.get("Cafe 3").equals(answerTwoClusters.get("Jasmine Thai")));
 		
-		db.kMeansClusters_json(4);
+		db.kMeansClusters_json(8);
 		HashMap<String, Integer> answerFourClusters = new HashMap<String, Integer> ();
 		answerFourClusters = db.getkMeans();
 		assertTrue(answerFourClusters.get("Cafe 3").equals(answerFourClusters.get("Jasmine Thai")));	
@@ -127,11 +121,45 @@ public class DatabaseTests {
 		
 		assertTrue(answerFiveClusters.get("The Melt Berkeley").equals(answerFiveClusters.get("Gordo Taqueria")));
 		
-		db.kMeansClusters_json(20);
+		db.kMeansClusters_json(70);
 		HashMap<String, Integer> answerTwentyClusters = new HashMap<String, Integer> ();
 		answerTwentyClusters = db.getkMeans();
 		
 		assertTrue(answerTwentyClusters.get("The Melt Berkeley").equals(answerTwentyClusters.get("Gordo Taqueria")));	
 	}
 
+	@Test
+	public void testGetMatchesSmall() throws IOException {
+		YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurantsSmaller.json?token=AYhesbVILpI-3Mp293xEllguPpSIOfNxks5aLIEawA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=AYhesXPlDlbZSJnqVVsQSkpaKRM3XQiqks5aLII7wA%3D%3D",
+	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=AYhesUJKUgqJY-XxQbVCPnq-2OQhxBn2ks5aLIGowA%3D%3D");
+		
+		String query = "(price < 3 && price > 1)";
+		assertEquals(7, db.getMatches(query).size());
+		
+		query = "in(Telegraph Ave) && category(Indian)";
+		assertEquals(0, db.getMatches(query).size());
+		
+		query = "(category(Indian) || category(Chinese)) || in(UC Campus Area)";
+		assertEquals(10, db.getMatches(query).size());
+		
+		query = "name(Jasmine Thai)";
+		assertEquals(1, db.getMatches(query).size());
+	}
+	
+	@Test
+	public void testGetMatchesLarge() throws IOException {
+		YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=AYhesc_qFfKdIAjWV_nu5FRXHHhneyP2ks5aNbeXwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=AYhesXPlDlbZSJnqVVsQSkpaKRM3XQiqks5aLII7wA%3D%3D",
+	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=AYhesUJKUgqJY-XxQbVCPnq-2OQhxBn2ks5aLIGowA%3D%3D");
+		
+		String query = "(price < 3 && price > 1)";
+		assertEquals(7, db.getMatches(query).size());
+		
+		query = "in(Telegraph Ave) && category(Indian)";
+		assertEquals(0, db.getMatches(query).size());
+		
+		query = "(category(Indian) || category(Chinese)) || in(UC Campus Area)";
+		assertEquals(10, db.getMatches(query).size());
+	}
 }

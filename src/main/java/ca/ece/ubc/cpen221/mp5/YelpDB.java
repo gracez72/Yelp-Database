@@ -38,6 +38,7 @@ public class YelpDB<T> implements MP5Db<T> {
 	private ConcurrentHashMap<String, Business> businessbyID;
 	private ConcurrentHashMap<String, Review> reviewbyID;
 	private ArrayList<Business> businesses = new ArrayList<Business> ();
+	private Map<Integer, Set<Business>> filteredByAtom = new HashMap <Integer, Set<Business>> ();
 	
 	private HashMap<String, Integer> kMeansClusters = new HashMap<String, Integer> ();	
 	
@@ -82,89 +83,26 @@ public class YelpDB<T> implements MP5Db<T> {
 		ParseTree tree = parser.query();
 		ParseTreeWalker walker = new ParseTreeWalker();
 		GrammarListenerGetNodes listener = new GrammarListenerGetNodes();
-		walker.walk(listener, tree);
 		
-		Map<Integer, String> atoms = new HashMap <Integer, String> ();
-		atoms = listener.getAtoms();
-		
-		Map<Integer, Set<Business>> filteredByAtom = new HashMap <Integer, Set<Business>> ();
-		
-		for (int counter = 0; counter < atoms.size(); counter++) {
-			String currentAtom = atoms.get(counter);
-			
-			String operation = currentAtom.substring(0, 1);
-			String condition = currentAtom.substring(1);
-	
-			Set<Business> currentFilter = new HashSet<Business> ();
-			if (operation.equals("I"))
-				currentFilter = businesses.stream().filter(x -> x.getFormattedNeighborhoods().contains(condition))
-						.collect(Collectors.toSet());
-
-			if (operation.equals("C"))
-				currentFilter = businesses.stream().filter(x -> x.getFormattedCategories().contains(condition))
-						.collect(Collectors.toSet());
-
-			if (operation.equals("N"))
-				currentFilter = businesses.stream().filter(x -> x.getFormattedName().contains(condition))
-						.collect(Collectors.toSet());
-
-			if (operation.equals("R")) {
-				if (condition.substring(0, 2).equals("<="))
-					currentFilter = businesses.stream()
-							.filter(x -> x.getStars() <= Integer.parseInt(condition.substring(condition.length() - 1)))
-							.collect(Collectors.toSet());
-
-				else if (condition.substring(0, 2).equals(">="))
-					currentFilter = businesses.stream()
-							.filter(x -> x.getStars() >= Integer.parseInt(condition.substring(condition.length() - 1)))
-							.collect(Collectors.toSet());
-
-				else if (condition.substring(0, 1).equals("="))
-					currentFilter = businesses.stream()
-							.filter(x -> x.getStars() == Integer.parseInt(condition.substring(condition.length() - 1)))
-							.collect(Collectors.toSet());
-
-				else if (condition.substring(0, 1).equals("<"))
-					currentFilter = businesses.stream()
-							.filter(x -> x.getStars() < Integer.parseInt(condition.substring(condition.length() - 1)))
-							.collect(Collectors.toSet());
-
-				else
-					currentFilter = businesses.stream()
-							.filter(x -> x.getStars() > Integer.parseInt(condition.substring(condition.length() - 1)))
-							.collect(Collectors.toSet());
-			}
-
-			if (operation.equals("P")) {
-				if (condition.substring(0, 2).equals("<="))
-					currentFilter = businesses.stream()
-							.filter(x -> x.getPrice() <= Integer.parseInt(condition.substring(condition.length() - 1)))
-							.collect(Collectors.toSet());
-
-				else if (condition.substring(0, 2).equals(">="))
-					currentFilter = businesses.stream()
-							.filter(x -> x.getPrice() >= Integer.parseInt(condition.substring(condition.length() - 1)))
-							.collect(Collectors.toSet());
-
-				else if (condition.substring(0, 1).equals("="))
-					currentFilter = businesses.stream()
-							.filter(x -> x.getPrice() == Integer.parseInt(condition.substring(condition.length() - 1)))
-							.collect(Collectors.toSet());
-
-				else if (condition.substring(0, 1).equals("<"))
-					currentFilter = businesses.stream()
-							.filter(x -> x.getPrice() < Integer.parseInt(condition.substring(condition.length() - 1)))
-							.collect(Collectors.toSet());
-
-				else
-					currentFilter = businesses.stream()
-							.filter(x -> x.getPrice() > Integer.parseInt(condition.substring(condition.length() - 1)))
-							.collect(Collectors.toSet());
-			}
-
-			filteredByAtom.put(counter, currentFilter);
+		/*If the query is in an incorrect format, then the parse tree will
+		 *throw an exception. 
+		 */
+		try {
+			walker.walk(listener, tree);
+		} catch (IllegalArgumentException e){
+			return null;
 		}
-
+		
+		//Map of each of the different requests in the query to a unique integer.
+		Map<Integer, String> atoms = listener.getAtoms();
+		
+		//Creates another map (private field) that maps a set of business objects
+		//that satisfy a condition (atom) to the same integer that condition is 
+		//mapped to.
+		for (int counter = 0; counter < atoms.size(); counter++) {
+			filterBusinesses(atoms.get(counter), counter);
+		}
+		
 		Stack<String> stack = new Stack<String> ();
 		stack = listener.getStack();
 		
@@ -176,16 +114,20 @@ public class YelpDB<T> implements MP5Db<T> {
 			String operand = "";
 			int conditionOne = -1;
 			int conditionTwo = -1;
+			
+			//The next set of conditions combines previous brackets
 			if (stack.peek().equals("||") || stack.peek().equals("&&"))
 				operand = stack.pop();
-			
-			else {
+			//The next set of conditions is inside brackets
+			else { 
 				conditionOne = Integer.parseInt(stack.pop());
 				conditionTwo = Integer.parseInt(stack.pop());
 				operand = stack.pop();
 			}
 			
-			//Filter
+			//Depending on the above conditions, the filtered sets are chosen
+			//and combined accordingly to form one large filtered set that
+			//satisfies the conditions.
 			if (operand.equals("||") && conditionOne == -1) {
 				tempFilteredSet.addAll(tempFilteredSets.pop());
 				tempFilteredSet.addAll(tempFilteredSets.pop());
@@ -224,9 +166,122 @@ public class YelpDB<T> implements MP5Db<T> {
 		return (Set<T>) tempFilteredSets.pop();
 	}
 	
+	/**
+	 * Takes in a condition for the businesses and filters out the businesses
+	 * in the database that satisfy that condition.
+	 * 
+	 *  @param currentAtom - condition to be satisfied, first letter in the
+	 *  				string specifies what kind of condition it is
+	 *  @param counter - specifies what integer this condition is mapped to
+	 *  				so that the filtered set can be mapped to the same integer
+	 *  @modifies filteredByAtom - private field that maps a set of business objects
+	 *  				to an integer that corresponds to a specific condition
+	 */
+	private void filterBusinesses (String currentAtom, int counter) {
+		String operation = currentAtom.substring(0, 1);
+		String condition = currentAtom.substring(1);
+
+		Set<Business> currentFilter = new HashSet<Business> ();
+		//Condition is a neighborhood
+		if (operation.equals("I"))
+			currentFilter = businesses.stream().filter(x -> x.getFormattedNeighborhoods().contains(condition))
+					.collect(Collectors.toSet());
+
+		//Condition is a category
+		if (operation.equals("C"))
+			currentFilter = businesses.stream().filter(x -> x.getFormattedCategories().contains(condition))
+					.collect(Collectors.toSet());
+
+		//Condition is a name
+		if (operation.equals("N"))
+			currentFilter = businesses.stream().filter(x -> x.getFormattedName().contains(condition))
+					.collect(Collectors.toSet());
+
+		//Condition is a rating
+		if (operation.equals("R")) {
+			if (condition.substring(0, 2).equals("<="))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getStars() <= Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else if (condition.substring(0, 2).equals(">="))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getStars() >= Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else if (condition.substring(0, 1).equals("="))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getStars() == Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else if (condition.substring(0, 1).equals("<"))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getStars() < Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else
+				currentFilter = businesses.stream()
+						.filter(x -> x.getStars() > Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+		}
+
+		//Condition is a price
+		if (operation.equals("P")) {
+			if (condition.substring(0, 2).equals("<="))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getPrice() <= Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else if (condition.substring(0, 2).equals(">="))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getPrice() >= Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else if (condition.substring(0, 1).equals("="))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getPrice() == Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else if (condition.substring(0, 1).equals("<"))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getPrice() < Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else
+				currentFilter = businesses.stream()
+						.filter(x -> x.getPrice() > Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+		}
+
+		filteredByAtom.put(counter, currentFilter);
+	}
+	
+	/**
+	 * Takes in a query string of conditions, passes it to the getMatches method,
+	 * and analyzes the return of the method to provide a user with a reply.
+	 * 
+	 * @param query - request for restaurants that satisfy specific conditions
+	 * @return a string in JSON format of all the restaurants that
+	 * 		satisfy the query, returns ERR: NO_MATCH if there are no
+	 * 		restaurants that match, and returns ERR: INVALID_QUERY if
+	 * 		the query is not structured correctly
+	 */
 	public String parseQuery(String query) {
 		Set<T> matches = getMatches(query);
-		return null;
+		try {
+			if (matches.isEmpty())
+				return "ERR: NO_MATCH";
+			else {
+				String reply = "";
+				for (T business: matches) {
+					Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+					reply = reply.concat(gson.toJson(business));
+				}
+				return "Reply: " + reply;
+			}
+		} catch (NullPointerException e) {
+			return "ERR: INVALID_QUERY";
+		}
 	}
 	
 	/**
@@ -248,11 +303,12 @@ public class YelpDB<T> implements MP5Db<T> {
 		}
 
 	}
-/**
- * REQUIRES REVIEW HAVE BUSINESS ID, REVIEW ID, USER ID, DATE, TEXT or returns ERR: INVALID_USER_STRING
- * @param line
- * @return
- */
+	
+	/**
+	 * REQUIRES REVIEW HAVE BUSINESS ID, REVIEW ID, USER ID, DATE, TEXT or returns ERR: INVALID_USER_STRING
+	 * @param line
+	 * @return
+	 */
 	public String addReview(String line) {
 		try {
 			Gson gson = new Gson();
@@ -267,6 +323,7 @@ public class YelpDB<T> implements MP5Db<T> {
 			return "ERR: NO_SUCH_REVIEW";
 		}
 	}
+	
 	/**
 	 * Adds a user using information given from Client input to database.
 	 * 
@@ -499,15 +556,6 @@ public class YelpDB<T> implements MP5Db<T> {
 	}
 
 	/**
-	 * Returns map of each business to its cluseter, used for debugging kClusters
-	 * @return HashMap that has each Business (by name) mapped to its
-	 * 		cluster number
-	 */
-	public HashMap<String, Integer> getkMeans () {
-		return kMeansClusters;
-	}
-	
-	/**
 	 * Calculates squared distance between two Cartesian points
 	 * @param x1, y1
 	 * 				coordinates of a point (x1, y1), values are not null 
@@ -522,6 +570,15 @@ public class YelpDB<T> implements MP5Db<T> {
 		return Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
 	}
 
+	/**
+	 * Returns map of each business to its cluster, used for debugging kClusters
+	 * @return HashMap that has each Business (by name) mapped to its
+	 * 		cluster number
+	 */
+	public HashMap<String, Integer> getkMeans () {
+		return kMeansClusters;
+	}
+	
 	/**
 	 * Implements a least-squares linear regression to approximate
 	 * 		the relationship between price and rating of a restaurant.

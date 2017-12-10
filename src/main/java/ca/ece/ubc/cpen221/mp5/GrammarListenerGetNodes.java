@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class GrammarListenerGetNodes extends GrammarBaseListener {
@@ -47,16 +48,20 @@ public class GrammarListenerGetNodes extends GrammarBaseListener {
 		String operation = "";
 		List<TerminalNode> token = ctx.AND();
 		
-		for (TerminalNode part: token) 
-			operation = operation.concat(part.getText());
-		
-		if(operation.equals("")) {
-			token = ctx.OR();
-			for (TerminalNode part: token) 
-				operation = operation.concat(part.getText());
+		for (TerminalNode part: token) {
+			operation = part.getText();
+			if(operation.length() != 0)
+				stack.push(operation);
 		}
 		
-		stack.push(operation);
+		operation = "";
+		
+		token = ctx.OR();
+		for (TerminalNode part: token) {
+			operation = part.getText();
+			if(operation.length() != 0)
+				stack.push(operation);
+		}
 	}	
 	
 	public void exitExpr(GrammarParser.ExprContext ctx) {
@@ -68,10 +73,14 @@ public class GrammarListenerGetNodes extends GrammarBaseListener {
 			stack.push(text);
 	}	
 	
+	public void visitErrorNode(ErrorNode node) { 
+		throw new IllegalArgumentException ();
+	}
+	
 	//GETTER METHODS
 	public Stack<String> getStack () {
 		Stack<String> tempstack = new Stack<String> ();
-		
+	
 		while (!stack.isEmpty()) {
 			String unformatted = stack.pop();
 			String[] array = unformatted.split(",");

@@ -442,6 +442,25 @@ public class DatabaseTests {
 		
 		query = "name(Jasmine Thai)";
 		assertEquals(1, db.getMatches(query).size());
+		
+		query = "(price <= 5 && rating > 3) && in(Telegraph Ave) && category(Chinese)";
+		assertEquals(2, db.getMatches(query).size());
+		
+		query = "rating <= 3 || category(Chinese) || name(Jasmine Thai) || in(Telegraph Ave)";
+		assertEquals(9, db.getMatches(query).size());
+		
+		query = "(rating >= 3 && price >= 2) || category(Chinese)";
+		assertEquals(7, db.getMatches(query).size());
+		
+		query = "price = 3 && (rating=4 || rating < 3)";
+		assertEquals(0, db.getMatches(query).size());
+		
+		query = "(rating price) < 4";
+		try {
+			db.getMatches(query).size();
+		} catch (NullPointerException e) {
+			assertTrue(true);
+		}
 	}
 	
 	@Test

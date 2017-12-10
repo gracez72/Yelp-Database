@@ -50,17 +50,13 @@ public class GrammarListenerGetNodes extends GrammarBaseListener {
 		
 		for (TerminalNode part: token) {
 			operation = part.getText();
-			if(operation.length() != 0)
-				stack.push(operation);
+			stack.push(operation);
 		}
-		
-		operation = "";
 		
 		token = ctx.OR();
 		for (TerminalNode part: token) {
 			operation = part.getText();
-			if(operation.length() != 0)
-				stack.push(operation);
+			stack.push(operation);
 		}
 	}	
 	

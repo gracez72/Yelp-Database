@@ -455,6 +455,9 @@ public class DatabaseTests {
 		query = "price = 3 && (rating=4 || rating < 3)";
 		assertEquals(0, db.getMatches(query).size());
 		
+		query = "price <= 2";
+		assertEquals(9, db.getMatches(query).size());
+		
 		query = "(rating price) < 4";
 		try {
 			db.getMatches(query).size();

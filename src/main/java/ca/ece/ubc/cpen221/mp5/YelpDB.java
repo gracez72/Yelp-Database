@@ -1,6 +1,7 @@
 package ca.ece.ubc.cpen221.mp5;
 
 import java.io.BufferedReader;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -15,6 +16,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 
@@ -33,12 +36,12 @@ import java.net.URL;
 import java.net.URLConnection;
 
 public class YelpDB<T> implements MP5Db<T> {
-
 	private ConcurrentHashMap<String, User> userbyID;
 	private ConcurrentHashMap<String, Business> businessbyID;
 	private ConcurrentHashMap<String, Review> reviewbyID;
+	
 	private ArrayList<Business> businesses = new ArrayList<Business> ();
-	private Map<Integer, Set<Business>> filteredByAtom = new HashMap <Integer, Set<Business>> ();
+	private ConcurrentHashMap<Integer, Set<Business>> filteredByAtom = new ConcurrentHashMap <Integer, Set<Business>> ();
 	
 	private HashMap<String, Integer> kMeansClusters = new HashMap<String, Integer> ();	
 	
@@ -59,8 +62,9 @@ public class YelpDB<T> implements MP5Db<T> {
 			ParseJSON(businessFile, "business");
 			ParseJSON(userFile, "user");
 			ParseJSON(reviewFile, "review");
-
-		} catch (IOException e) {
+		} 
+		
+		catch (IOException e) {
 			System.out.println("ERROR: filenames not found.");
 		}
 	}
@@ -73,35 +77,34 @@ public class YelpDB<T> implements MP5Db<T> {
 	 * @return the set of objects that matches the query
 	 */
 	@SuppressWarnings("unchecked")
-	@Override
 	public Set<T> getMatches(String queryString) {
 		CharStream stream = new ANTLRInputStream(queryString);
 		GrammarLexer lexer = new GrammarLexer(stream);
 		TokenStream tokens = new CommonTokenStream(lexer);
 		GrammarParser parser = new GrammarParser(tokens);
+		parser.removeErrorListeners();
 		
 		ParseTree tree = parser.query();
 		ParseTreeWalker walker = new ParseTreeWalker();
 		GrammarListenerGetNodes listener = new GrammarListenerGetNodes();
 		
-		/*If the query is in an incorrect format, then the parse tree will
-		 *throw an exception. 
-		 */
+		//If the query is in an incorrect format, then the parse tree will
+		//throw an exception.
 		try {
 			walker.walk(listener, tree);
 		} catch (IllegalArgumentException e){
 			return null;
 		}
 		
-		//Map of each of the different requests in the query to a unique integer.
+		//Map of each of the different requests in the query, mapped to a unique integer.
 		Map<Integer, String> atoms = listener.getAtoms();
 		
-		//Creates another map (private field) that maps a set of business objects
-		//that satisfy a condition (atom) to the same integer that condition is 
+		//Concurrrently creates another map (private field) that maps a set of business
+		//objects satisfying a condition (atom) to the same integer that that condition is 
 		//mapped to.
-		for (int counter = 0; counter < atoms.size(); counter++) {
-			filterBusinesses(atoms.get(counter), counter);
-		}
+		filteredByAtom.clear();
+		FilterAtoms t = new FilterAtoms (atoms, 0);
+		ForkJoinPool.commonPool().invoke(t);
 		
 		Stack<String> stack = new Stack<String> ();
 		stack = listener.getStack();
@@ -163,12 +166,44 @@ public class YelpDB<T> implements MP5Db<T> {
 			}
 		}
 		
+		//Some incorrectly structured queries will get passed by the parser
+		//due to the way the grammar is written. This check ensures that
+		//the query is correct.
+		if (tempFilteredSets.size() > 1)
+			return null;
+	
 		return (Set<T>) tempFilteredSets.pop();
 	}
 	
 	/**
+	 * Class uses ForkJoin framework to concurrently filter the businesses
+	 * by the atoms in the user's request.
+	 */
+	@SuppressWarnings("serial")
+	private class FilterAtoms extends RecursiveAction{
+		private Map<Integer, String> atoms = new HashMap<Integer, String>();
+		private int counter;
+
+		private FilterAtoms(Map<Integer, String> atoms, int counter) {
+			this.atoms = atoms;
+			this.counter = counter;
+		}
+
+		protected void compute() {
+			if (counter < atoms.size()) {
+				FilterAtoms next = new FilterAtoms (this.atoms, counter + 1);
+				next.fork();
+				
+				filterBusinesses(atoms.get(counter), counter);
+				next.join();
+			}
+		}
+	}
+	
+	/**
 	 * Takes in a condition for the businesses and filters out the businesses
-	 * in the database that satisfy that condition.
+	 * in the database that satisfy that condition. Class run concurrently, with
+	 * amount of threads = amount of atoms in the request.
 	 * 
 	 *  @param currentAtom - condition to be satisfied, first letter in the
 	 *  				string specifies what kind of condition it is
@@ -293,6 +328,13 @@ public class YelpDB<T> implements MP5Db<T> {
 		return this.businessbyID;
 	}
 
+	/**
+	 * Retrieves information about a restaurant based on its businessID
+	 * 
+	 * @param businessID
+	 * @return Json formatted string representing restaurant information or error message
+	 * 			returns ERR: INVALID_RESTAURANT_STRING if the restaurant doesn't exist
+	 */
 	public String getRestaurant(String businessID) {
 		if (!businessbyID.containsKey(businessID))
 			return "ERR: INVALID_RESTAURANT_STRING";
@@ -301,13 +343,16 @@ public class YelpDB<T> implements MP5Db<T> {
 			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 			return "Reply: " + gson.toJson(restaurant);
 		}
-
 	}
 	
 	/**
-	 * REQUIRES REVIEW HAVE BUSINESS ID, REVIEW ID, USER ID, DATE, TEXT or returns ERR: INVALID_USER_STRING
+	 * Adds a review using information given from Client input to database.
+	 * 
 	 * @param line
-	 * @return
+	 * @requires review must have a businessID, userID, date, text
+	 * @return Json formatted string representing review information or error message
+	 * 			returns ERR: INVALID_REVIEW_STRING if information is missing
+	 * 			return ERR: NO_SUCH_REVIEW if no information is given
 	 */
 	public String addReview(String line) {
 		try {
@@ -329,6 +374,8 @@ public class YelpDB<T> implements MP5Db<T> {
 	 * 
 	 * @param line
 	 * @return Json formatted string representing user information or error message
+	 * 			returns ERR: INVALID_USER_STRING if information is missing
+	 * 			return ERR: NO_SUCH_USER if no information is given
 	 */
 	public String addUser(String line) {
 		try {
@@ -346,13 +393,12 @@ public class YelpDB<T> implements MP5Db<T> {
 	/**
 	 * Adds a restaurant using information given from Client input to database.
 	 * 
-	 * ASSUMPTIONS: IF NO COORDINATES ARE GIVEN, THE DEFAULT VALUES ARE 0.0
-	 * REQUIRES RESTAURANT HAVE A BUSINESS ID, NAME, STATE, ADDRESS
 	 * @param line
+	 * @requires restaurant to have a name, state, address
+	 * 			ASSUMPTIONS: IF NO COORDINATES ARE GIVEN, THE DEFAULT VALUES ARE 0.0
 	 * @return Json formatted string representing restaurant information or error message
-	 * 
-	 * 			RETURNS ERR: NO_SUCH_RESTAURANT if no information is given
-	 * 			RETURNS ERR: INVALID_RESTAURANT_STRING if information is missing
+	 * 			returns ERR: NO_SUCH_RESTAURANT if no information is given
+	 * 			returns ERR: INVALID_RESTAURANT_STRING if information is missing
 	 */
 	public String addRestaurant(String line) {
 		try {
@@ -368,21 +414,18 @@ public class YelpDB<T> implements MP5Db<T> {
 		} catch (JsonSyntaxException c) {
 			return "ERR: INVALID_RESTAURANT_STRING";
 		}
-
 	}
 	
 	/**
-	 * Cluster objects into k clusters using k-means clustering
-	 * 
-	 * REP INVARIANT: businessesbyID is never null
+	 * Cluster objects into k clusters using k-means clustering			
 	 * 
 	 * @param k
 	 *            number of clusters to create (0 < k <= number of objects)
 	 *            requires k is not null 
+	 * @requires businessesbyID to not be null, and be already initialized
 	 * @return a String, in JSON format, that represents the clusters
 	 * @throws IOException 
 	 */
-	@Override
 	public String kMeansClusters_json(int k) {
 		double minX = Double.MAX_VALUE;
 		double maxX = -Double.MAX_VALUE;

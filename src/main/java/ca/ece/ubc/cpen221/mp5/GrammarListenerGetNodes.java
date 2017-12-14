@@ -8,15 +8,22 @@ import java.util.Stack;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+/**
+ * Class walks through the parse tree created by the ANTLR parser,
+ * and returns the tree in an easily manipulated format.
+ * 
+ * The class can return a Stack formatted in postfix notation, and a Map
+ * of all the requests in the query each mapped to a unique integer.
+ */
 public class GrammarListenerGetNodes extends GrammarBaseListener {
 	private Stack<String> stack = new Stack<String> ();
 
 	private Map<Integer, String> atoms = new HashMap<Integer, String> ();
 	private int counter = 0;
 	
-	
 	/**
-	 * Maps each atom to an integer for easy access.
+	 * For every condition (or atom) in the request, it is mapped to a
+	 * unique arbitrary integer for easy access later.
 	 */
 	public void exitAtom(GrammarParser.AtomContext ctx) { 
 		String text = ctx.getChild(0).getText();
@@ -44,6 +51,10 @@ public class GrammarListenerGetNodes extends GrammarBaseListener {
 		}
 	}
 	
+	/**
+	 * At the start of every expression, the operation of the
+	 * expression is pushed onto the stack.
+	 */
 	public void enterExpr(GrammarParser.ExprContext ctx) {
 		String operation = "";
 		List<TerminalNode> token = ctx.AND();
@@ -60,6 +71,12 @@ public class GrammarListenerGetNodes extends GrammarBaseListener {
 		}
 	}	
 	
+	/**
+	 * If an expression is the child of an atom (it is an internal expression
+	 * and not a large, overarching expression), the two operands and the operation
+	 * are popped off of the stack and formatted such that they form one
+	 * string in postfix notation. The string is then pushed back to the stack.
+	 */
 	public void exitExpr(GrammarParser.ExprContext ctx) {
 		String text = "";
 		if (ctx.getParent() instanceof GrammarParser.AtomContext)
@@ -69,11 +86,24 @@ public class GrammarListenerGetNodes extends GrammarBaseListener {
 			stack.push(text);
 	}	
 	
+	/**
+	 * If the query is formatted incorrectly, throws an exception.
+	 * @throws IllegalArgumentException
+	 */
 	public void visitErrorNode(ErrorNode node) { 
 		throw new IllegalArgumentException ();
 	}
 	
-	//GETTER METHODS
+	/**
+	 * Reformats the stack into a form such that either :
+	 * 		-an operation refers to the two most preceding integers
+	 * 			on the stack
+	 * 		-an operation refers to the two most preceding sets of
+	 * 			operation and operands
+	 * 
+	 * @return formatted stack of strings, where each entry is either
+	 * 			and integer that represents an atoms, or an operation
+	 */
 	public Stack<String> getStack () {
 		Stack<String> tempstack = new Stack<String> ();
 	
@@ -102,6 +132,9 @@ public class GrammarListenerGetNodes extends GrammarBaseListener {
 		return stack;
 	}
 	
+	/**
+	 * @return map of all atoms in request, mapped to a unique integer
+	 */
 	public Map<Integer, String> getAtoms () {
 		return atoms;
 	}

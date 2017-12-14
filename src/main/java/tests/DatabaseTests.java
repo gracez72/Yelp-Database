@@ -54,15 +54,6 @@ public class DatabaseTests {
 		
 		
 	}
-	
-	@Test
-	public void testKCluster() throws IOException {
-		YelpDB<Restaurant> db = new YelpDB<Restaurant>(
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmo9tXwh9lYalidf_muOfIGcyx4H1ks5aIm-HwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
-		db.kMeansClusters_json(20);
-	}
 
 	@Test
 	public void test1() throws IOException {
@@ -430,7 +421,7 @@ public class DatabaseTests {
 		YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurantsSmaller.json?token=AYhescewn5kjXmSswpYaze-iXwsZQk-Uks5aNbzwwA%3D%3D",
 				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=AYhesRUHOgcY1NVhTFilUqMiz0izryWBks5aNbyiwA%3D%3D",
 	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=AYhesaLhK6P4cF_iKOPX1qvQzKq5vDZPks5aNbyEwA%3D%3D");
-		
+				
 		String query = "(price < 3 && price > 1)";
 		assertEquals(7, db.getMatches(query).size());
 		
@@ -464,21 +455,46 @@ public class DatabaseTests {
 		} catch (NullPointerException e) {
 			assertTrue(true);
 		}
+		
+		query = "rating < 3 price >5";
+		try {
+			db.getMatches(query).size();
+		} catch (NullPointerException e) {
+			assertTrue(true);
+		}
 	}
 	
 	@Test
 	public void testGetMatchesLarge() throws IOException {
 		YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=AYhesc_qFfKdIAjWV_nu5FRXHHhneyP2ks5aNbeXwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=AYhesXPlDlbZSJnqVVsQSkpaKRM3XQiqks5aLII7wA%3D%3D",
-	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=AYhesUJKUgqJY-XxQbVCPnq-2OQhxBn2ks5aLIGowA%3D%3D");
-		
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=AYhesRUHOgcY1NVhTFilUqMiz0izryWBks5aNbyiwA%3D%3D",
+	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=AYhesaLhK6P4cF_iKOPX1qvQzKq5vDZPks5aNbyEwA%3D%3D");
+				
 		String query = "(price < 3 && price > 1)";
-		assertEquals(7, db.getMatches(query).size());
+		assertEquals(61, db.getMatches(query).size());
 		
 		query = "in(Telegraph Ave) && category(Indian)";
-		assertEquals(0, db.getMatches(query).size());
+		assertEquals(3, db.getMatches(query).size());
 		
 		query = "(category(Indian) || category(Chinese)) || in(UC Campus Area)";
-		assertEquals(10, db.getMatches(query).size());
+		assertEquals(135, db.getMatches(query).size());
+		
+		query = "name(Jasmine Thai)";
+		assertEquals(1, db.getMatches(query).size());
+		
+		query = "(price <= 5 && rating > 3) && in(Telegraph Ave) && category(Chinese)";
+		assertEquals(3, db.getMatches(query).size());
+		
+		query = "rating <= 3 || category(Chinese) || name(Jasmine Thai) || in(Telegraph Ave)";
+		assertEquals(97, db.getMatches(query).size());
+		
+		query = "(rating >= 3 && price >= 2) || category(Chinese)";
+		assertEquals(79, db.getMatches(query).size());
+		
+		query = "price = 3 && (rating=4 || rating < 3)";
+		assertEquals(4, db.getMatches(query).size());
+		
+		query = "price <= 2";
+		assertEquals(115, db.getMatches(query).size());
 	}
 }

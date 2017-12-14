@@ -13,7 +13,7 @@ public class Review {
 	private String type = "review";
 	private final String business_id;
 	private HashMap<String, Integer> votes;
-	private final String review_id;
+	private String review_id;
 	private String text;
 	private double stars;
 	private final String user_id;
@@ -129,6 +129,15 @@ public class Review {
 	public int hashCode() {
 		return this.review_id.hashCode();
 		
+	}
+	/**
+	 * Sets review id.
+	 * 
+	 * @modifies review_id 
+	 */
+	public void setReviewID() {
+		
+		this.review_id = this.business_id + this.getStars() + this.getDate();
 	}
 	
 	/**

@@ -144,7 +144,7 @@ public class YelpDB<T> implements MP5Db<T> {
 
 	}
 /**
- * REQUIRES REVIEW HAVE BUSINESS ID, REVIEW ID, USER ID, DATE, TEXT or returns ERR: INVALID_USER_STRING
+ * REQUIRES REVIEW HAVE BUSINESS ID,USER ID, DATE, TEXT or returns ERR: INVALID_USER_STRING
  * @param line
  * @return
  */
@@ -152,8 +152,9 @@ public class YelpDB<T> implements MP5Db<T> {
 		try {
 			Gson gson = new Gson();
 			Review review = gson.fromJson(line, Review.class);
-			if (review.getBusinessID() == null | review.getReviewID() == null | review.getUserID() == null|
+			if (review.getBusinessID() == null |review.getUserID() == null|
 				review.getDate() == null | review.getText() == null) return "ERR: INVALID_REVIEW_STRING";
+			review.setReviewID();
 			reviewbyID.put(review.getReviewID(), review);
 			userbyID.get(review.getUserID()).addReview(review.getReviewID());
 			return "Reply: " + gson.toJson(review);
@@ -196,7 +197,7 @@ public class YelpDB<T> implements MP5Db<T> {
 		try {
 			Gson gson = new Gson();
 			Restaurant restaurant = gson.fromJson(line, Restaurant.class);
-			if (restaurant.getBusinessID() == null | restaurant.getName() == null | restaurant.getState() == null | 
+			if (restaurant.getName() == null | restaurant.getState() == null | 
 			    restaurant.getFullAddress() == null) return "ERR: INVALID_RESTAURANT_STRING";
 			restaurant.setBusinessID();
 			businessbyID.put(restaurant.getBusinessID(), restaurant);
@@ -426,6 +427,9 @@ public class YelpDB<T> implements MP5Db<T> {
 	 * 
 	 * PRECONDITION: requires used to have made at least one review
 	 * 
+	 * ASSUMPTIONS: Ratings are [1,5] and prices are [1,5]
+	 * 				Filters out ratings and prices outside these ranges
+	 * 
 	 * @param user
 	 *            represents a user_id in the database
 	 * @return a function that predicts the user's ratings for objects (of type T)
@@ -438,10 +442,11 @@ public class YelpDB<T> implements MP5Db<T> {
 		ArrayList<String> reviewList = userbyID.get(user).getReviewList();
 		List<Integer> x = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
 				.map(review -> review.getBusinessID()).map(business_id -> businessbyID.get(business_id).getPrice())
-				.collect(Collectors.toList());
+				.filter(price -> ((price >= 1 && price <=5))).collect(Collectors.toList());
 		
 		List<Double> y = reviewList.stream().map(review_id -> reviewbyID.get(review_id))
-				.map(review -> review.getStars()).collect(Collectors.toList());
+				.map(review -> review.getStars()).filter(stars -> (stars >= 1 && stars <=5))
+				.collect(Collectors.toList());
 		
 		double x_mean = (double) x.stream().reduce(0, Integer::sum) / (double)(reviewList.stream().count());
 		double y_mean = y.stream().reduce(0.0, Double::sum) / (double) reviewList.stream().count();
@@ -455,7 +460,7 @@ public class YelpDB<T> implements MP5Db<T> {
 		double b;
 		if (Sxx != 0.0) {
 			b = Sxy / Sxx;
-		} else b = 0.0;
+		} else b = 0.0; //throw exception instead?
 		double a = y_mean - (b * x_mean);
 		//double R2 = Math.pow(Sxy, 2) / (Sxx * Syy);
 

@@ -137,7 +137,7 @@ public class Review {
 	 */
 	public void setReviewID() {
 		
-		this.review_id = this.business_id + this.getStars() + this.getDate();
+		this.review_id = this.business_id + this.getStars() + this.getText().hashCode();
 	}
 	
 	/**

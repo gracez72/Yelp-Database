@@ -54,18 +54,7 @@ public class DatabaseTests {
 		
 		
 	}
-
-	@Test
-	public void test1() throws IOException {
-		YelpDB<Restaurant> db = new YelpDB<Restaurant>(
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmo9tXwh9lYalidf_muOfIGcyx4H1ks5aIm-HwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
-		System.out.println(db.getRestaurant("2ciUQ05DREauhBC3xiA4qw"));
-		String line = "{\"open\": true, \"url\": \"http://www.yelp.com/biz/cafe-3-berkeley\", \"longitude\": -122.260408, \"neighborhoods\": [\"Telegraph Ave\", \"UC Campus Area\"], \"business_id\": \"gclB3ED6uk6viWlolSb_uA\", \"name\": \"Cafe 3\", \"categories\": [\"Cafes\", \"Restaurants\"], \"state\": \"CA\", \"type\": \"business\", \"stars\": 2.0, \"city\": \"Berkeley\", \"full_address\": \"2400 Durant Ave\\nTelegraph Ave\\nBerkeley, CA 94701\", \"review_count\": 9, \"photo_url\": \"http://s3-media1.ak.yelpcdn.com/bphoto/AaHq1UzXiT6zDBUYrJ2NKA/ms.jpg\", \"schools\": [\"University of California at Berkeley\"], \"latitude\": 37.867417, \"price\": 1}";
-		System.out.println(db.addRestaurant(line));
-
-	}
+	
 
 	// USER TESTS
 	@Test
@@ -245,7 +234,7 @@ public class DatabaseTests {
 					result = y;
 					assertTrue(result.equals(
 							"Reply: {\"open\":true,\"url\":\"http://www.yelp.com/biz/alborz-berkeley\",\"longitude\":-122.266645,\"neighborhoods\":[\"Downtown Berkeley\",\"UC Campus Area\"],\"business_id\":\"HXni0_SFPT1jAoH-Sm78Jg\",\"name\":\"Alborz\",\"categories\":[\"Persian/Iranian\",\"Restaurants\"],\"state\":\"CA\",\"type\":\"business\",\"stars\":3.5,\"city\":\"Berkeley\",\"full_address\":\"2142 Center St\\nDowntown Berkeley\\nBerkeley, CA 94704\",\"review_count\":172,\"photo_url\":\"http://s3-media2.ak.yelpcdn.com/bphoto/YOmjJWRKPMmgv4ctkNkBoA/ms.jpg\",\"schools\":[\"University of California at Berkeley\"],\"latitude\":37.8701999,\"price\":4}"));
-
+					
 					client2.sendRequest("end");
 					y = client2.getReply();
 					result = y;
@@ -312,11 +301,11 @@ public class DatabaseTests {
 					assertTrue(result.equals("ERR: INVALID_REVIEW_STRING"));
 
 					client3.sendRequest(
-							"ADDREVIEW {\"type\": \"review\", \"business_id\": \"1CBs84C-a-cuA3vncXVSAw\", \"votes\": {\"cool\": 0, \"useful\": 0, \"funny\": 0}, \"review_id\": \"DG8LX-iRbWlrcoiIOVW-Bw\", \"text\": \"Extra Large Athenian for pick-up please!!!!\\n\\nI wish they delivered to downtown Oakland.\", \"stars\": 4, \"user_id\": \"MY9ht7Fw_ER3dJ7baYjcxw\", \"date\": \"2011-09-28\"}");
+							"ADDREVIEW {\"type\": \"review\", \"business_id\": \"1CBs84C-a-cuA3vncXVSAw\", \"votes\": {\"cool\": 0, \"useful\": 0, \"funny\": 0}, \"text\": \"Extra Large Athenian for pick-up please!!!!\\n\\nI wish they delivered to downtown Oakland.\", \"stars\": 4, \"user_id\": \"MY9ht7Fw_ER3dJ7baYjcxw\", \"date\": \"2011-09-28\"}");
 					y = client3.getReply();
 					result = y;
 					assertTrue(result.equals(
-							"Reply: {\"type\":\"review\",\"business_id\":\"1CBs84C-a-cuA3vncXVSAw\",\"votes\":{\"cool\":0,\"useful\":0,\"funny\":0},\"review_id\":\"DG8LX-iRbWlrcoiIOVW-Bw\",\"text\":\"Extra Large Athenian for pick-up please!!!!\\n\\nI wish they delivered to downtown Oakland.\",\"stars\":4.0,\"user_id\":\"MY9ht7Fw_ER3dJ7baYjcxw\",\"date\":\"2011-09-28\"}"));
+							"Reply: {\"type\":\"review\",\"business_id\":\"1CBs84C-a-cuA3vncXVSAw\",\"votes\":{\"cool\":0,\"useful\":0,\"funny\":0},\"review_id\":\"1CBs84C-a-cuA3vncXVSAw4.01032624752\",\"text\":\"Extra Large Athenian for pick-up please!!!!\\n\\nI wish they delivered to downtown Oakland.\",\"stars\":4.0,\"user_id\":\"MY9ht7Fw_ER3dJ7baYjcxw\",\"date\":\"2011-09-28\"}"));
 
 					// MISSING TYPE
 					client3.sendRequest(

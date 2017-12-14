@@ -91,9 +91,9 @@ public class YelpDBServer {
 		try {
 
 			YelpDB<Restaurant> db = new YelpDB<Restaurant>(
-					"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmn2sjveuyRPCkEY2WXTzAtGjTlLYks5aJhUMwA%3D%3D",
-					"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
-					"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
+					"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmiCE0oer4xrm99LlT_hR6DcaOp6Aks5aOw1uwA%3D%3D",
+					"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmkZ_IPa_gmCCgFzlvWou-PQZxgZoks5aOw2twA%3D%3D",
+					"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmkyTZ_FNStHoLkjRYWVHq1xDpcpWks5aOw2awA%3D%3D");
 			
 			for (String line = in.readLine(); line != null; line = in.readLine()) {
 				System.err.println("request: " + line.toString());

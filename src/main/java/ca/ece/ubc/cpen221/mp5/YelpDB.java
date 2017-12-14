@@ -361,7 +361,7 @@ public class YelpDB<T> implements MP5Db<T> {
 			Review review = gson.fromJson(line, Review.class);
 			if (review.getBusinessID() == null |review.getUserID() == null|
 				review.getDate() == null | review.getText() == null) return "ERR: INVALID_REVIEW_STRING";
-			review.setReviewID();
+			if (review.getReviewID() == null) review.setReviewID();
 			reviewbyID.put(review.getReviewID(), review);
 			userbyID.get(review.getUserID()).addReview(review.getReviewID());
 			return "Reply: " + gson.toJson(review);

@@ -1,6 +1,7 @@
 package ca.ece.ubc.cpen221.mp5;
 
 import java.io.BufferedReader;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,10 +10,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 
@@ -22,7 +27,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import org.antlr.v4.tool.Grammar;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.Gson;
@@ -32,24 +36,14 @@ import java.net.URL;
 import java.net.URLConnection;
 
 public class YelpDB<T> implements MP5Db<T> {
-
 	private ConcurrentHashMap<String, User> userbyID;
-	private static ConcurrentHashMap<String, Business> businessbyID;
+	private ConcurrentHashMap<String, Business> businessbyID;
 	private ConcurrentHashMap<String, Review> reviewbyID;
 	
-	private HashMap<String, Integer> kMeansClusters = new HashMap<String, Integer> ();
-
-	public static void main(String[] args) {
-		YelpDB<Restaurant> db = new YelpDB<Restaurant>(
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmo9tXwh9lYalidf_muOfIGcyx4H1ks5aIm-HwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
-
-		String query = "in(Terminal Ave) && price < 3";
-		parseQuery(query);
-	}
+	private ArrayList<Business> businesses = new ArrayList<Business> ();
+	private ConcurrentHashMap<Integer, Set<Business>> filteredByAtom = new ConcurrentHashMap <Integer, Set<Business>> ();
 	
-	
+	private HashMap<String, Integer> kMeansClusters = new HashMap<String, Integer> ();	
 	
 	/**
 	 * Yelp Database constructor. 
@@ -68,11 +62,11 @@ public class YelpDB<T> implements MP5Db<T> {
 			ParseJSON(businessFile, "business");
 			ParseJSON(userFile, "user");
 			ParseJSON(reviewFile, "review");
-
-		} catch (IOException e) {
+		} 
+		
+		catch (IOException e) {
 			System.out.println("ERROR: filenames not found.");
 		}
-
 	}
 
 	/**
@@ -82,47 +76,249 @@ public class YelpDB<T> implements MP5Db<T> {
 	 * @param queryString
 	 * @return the set of objects that matches the query
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
 	public Set<T> getMatches(String queryString) {
 		CharStream stream = new ANTLRInputStream(queryString);
 		GrammarLexer lexer = new GrammarLexer(stream);
 		TokenStream tokens = new CommonTokenStream(lexer);
 		GrammarParser parser = new GrammarParser(tokens);
+		parser.removeErrorListeners();
 		
 		ParseTree tree = parser.query();
 		ParseTreeWalker walker = new ParseTreeWalker();
 		GrammarListenerGetNodes listener = new GrammarListenerGetNodes();
-		walker.walk(listener, tree);
 		
-		Set<Business> businesses = new HashSet<Business> ();
-		for(Entry<String, Business> someentry: businessbyID.entrySet()) {
-			businesses.add(someentry.getValue());
+		//If the query is in an incorrect format, then the parse tree will
+		//throw an exception.
+		try {
+			walker.walk(listener, tree);
+		} catch (IllegalArgumentException e){
+			return null;
 		}
 		
-		Set<Business> filteredBusinesses = businesses.stream().filter(x -> x.getNeighborhoods().contains(listener.getNeighbourhoods().get(0)))
-					.collect(Collectors.toSet());
+		//Map of each of the different requests in the query, mapped to a unique integer.
+		Map<Integer, String> atoms = listener.getAtoms();
 		
-			System.out.println(filteredBusinesses);
-		return null;
+		//Concurrrently creates another map (private field) that maps a set of business
+		//objects satisfying a condition (atom) to the same integer that that condition is 
+		//mapped to.
+		filteredByAtom.clear();
+		FilterAtoms t = new FilterAtoms (atoms, 0);
+		ForkJoinPool.commonPool().invoke(t);
+		
+		Stack<String> stack = new Stack<String> ();
+		stack = listener.getStack();
+		
+		Stack<Set<Business>> tempFilteredSets = new Stack<Set<Business>> ();
+		
+		while (!stack.isEmpty()) {
+			Set<Business> tempFilteredSet = new HashSet<Business> ();
+			
+			String operand = "";
+			int conditionOne = -1;
+			int conditionTwo = -1;
+			
+			//The next set of conditions combines previous brackets
+			if (stack.peek().equals("||") || stack.peek().equals("&&"))
+				operand = stack.pop();
+			//The next set of conditions is inside brackets
+			else { 
+				conditionOne = Integer.parseInt(stack.pop());
+				conditionTwo = Integer.parseInt(stack.pop());
+				operand = stack.pop();
+			}
+			
+			//Depending on the above conditions, the filtered sets are chosen
+			//and combined accordingly to form one large filtered set that
+			//satisfies the conditions.
+			if (operand.equals("||") && conditionOne == -1) {
+				tempFilteredSet.addAll(tempFilteredSets.pop());
+				tempFilteredSet.addAll(tempFilteredSets.pop());
+				tempFilteredSets.push(tempFilteredSet);
+			}
+			
+			else if (operand.equals("||")) {
+				tempFilteredSet.addAll(filteredByAtom.get(conditionOne));
+				tempFilteredSet.addAll(filteredByAtom.get(conditionTwo));
+				tempFilteredSets.push(tempFilteredSet);
+			}
+			
+			else if (operand.equals("&&") && conditionOne == -1) {
+				Set<Business> tempOne = new HashSet<Business> ();
+				tempOne.addAll(tempFilteredSets.pop());
+				Set<Business> tempTwo = new HashSet<Business> ();
+				tempTwo.addAll(tempFilteredSets.pop());
+				
+				tempFilteredSet = tempOne.stream().filter(x -> tempTwo.contains(x)).collect(Collectors.toSet());
+				tempFilteredSet.addAll(tempTwo.stream().filter(x -> tempOne.contains(x)).collect(Collectors.toSet()));
+				tempFilteredSets.push(tempFilteredSet);
+			}
+			
+			else {
+				Set<Business> tempOne = new HashSet<Business> ();
+				tempOne.addAll(filteredByAtom.get(conditionOne));
+				Set<Business> tempTwo = new HashSet<Business> ();
+				tempTwo.addAll(filteredByAtom.get(conditionTwo));
+				
+				tempFilteredSet = tempOne.stream().filter(x -> tempTwo.contains(x)).collect(Collectors.toSet());
+				tempFilteredSet.addAll(tempTwo.stream().filter(x -> tempOne.contains(x)).collect(Collectors.toSet()));
+				tempFilteredSets.push(tempFilteredSet);
+			}
+		}
+		
+		//Some incorrectly structured queries will get passed by the parser
+		//due to the way the grammar is written. This check ensures that
+		//the query is correct.
+		if (tempFilteredSets.size() > 1)
+			return null;
+	
+		return (Set<T>) tempFilteredSets.pop();
 	}
 	
-	public static String parseQuery(String query) {
-		//Set<T> matches = getMatches(query);
+	/**
+	 * Class uses ForkJoin framework to concurrently filter the businesses
+	 * by the atoms in the user's request.
+	 */
+	@SuppressWarnings("serial")
+	private class FilterAtoms extends RecursiveAction{
+		private Map<Integer, String> atoms = new HashMap<Integer, String>();
+		private int counter;
 
-		CharStream stream = new ANTLRInputStream(query);
-		GrammarLexer lexer = new GrammarLexer(stream);
-		TokenStream tokens = new CommonTokenStream(lexer);
-		GrammarParser parser = new GrammarParser(tokens);
-		
-		ParseTree tree = parser.query();
-		ParseTreeWalker walker = new ParseTreeWalker();
-		GrammarListenerGetNodes listener = new GrammarListenerGetNodes();
-		walker.walk(listener, tree);
+		private FilterAtoms(Map<Integer, String> atoms, int counter) {
+			this.atoms = atoms;
+			this.counter = counter;
+		}
 
-
-		
-		return null;
+		protected void compute() {
+			if (counter < atoms.size()) {
+				FilterAtoms next = new FilterAtoms (this.atoms, counter + 1);
+				next.fork();
+				
+				filterBusinesses(atoms.get(counter), counter);
+				next.join();
+			}
+		}
 	}
+	
+	/**
+	 * Takes in a condition for the businesses and filters out the businesses
+	 * in the database that satisfy that condition. Class run concurrently, with
+	 * amount of threads = amount of atoms in the request.
+	 * 
+	 *  @param currentAtom - condition to be satisfied, first letter in the
+	 *  				string specifies what kind of condition it is
+	 *  @param counter - specifies what integer this condition is mapped to
+	 *  				so that the filtered set can be mapped to the same integer
+	 *  @modifies filteredByAtom - private field that maps a set of business objects
+	 *  				to an integer that corresponds to a specific condition
+	 */
+	private void filterBusinesses (String currentAtom, int counter) {
+		String operation = currentAtom.substring(0, 1);
+		String condition = currentAtom.substring(1);
+
+		Set<Business> currentFilter = new HashSet<Business> ();
+		//Condition is a neighborhood
+		if (operation.equals("I"))
+			currentFilter = businesses.stream().filter(x -> x.getFormattedNeighborhoods().contains(condition))
+					.collect(Collectors.toSet());
+
+		//Condition is a category
+		if (operation.equals("C"))
+			currentFilter = businesses.stream().filter(x -> x.getFormattedCategories().contains(condition))
+					.collect(Collectors.toSet());
+
+		//Condition is a name
+		if (operation.equals("N"))
+			currentFilter = businesses.stream().filter(x -> x.getFormattedName().contains(condition))
+					.collect(Collectors.toSet());
+
+		//Condition is a rating
+		if (operation.equals("R")) {
+			if (condition.substring(0, 2).equals("<="))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getStars() <= Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else if (condition.substring(0, 2).equals(">="))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getStars() >= Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else if (condition.substring(0, 1).equals("="))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getStars() == Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else if (condition.substring(0, 1).equals("<"))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getStars() < Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else
+				currentFilter = businesses.stream()
+						.filter(x -> x.getStars() > Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+		}
+
+		//Condition is a price
+		if (operation.equals("P")) {
+			if (condition.substring(0, 2).equals("<="))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getPrice() <= Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else if (condition.substring(0, 2).equals(">="))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getPrice() >= Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else if (condition.substring(0, 1).equals("="))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getPrice() == Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else if (condition.substring(0, 1).equals("<"))
+				currentFilter = businesses.stream()
+						.filter(x -> x.getPrice() < Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+
+			else
+				currentFilter = businesses.stream()
+						.filter(x -> x.getPrice() > Integer.parseInt(condition.substring(condition.length() - 1)))
+						.collect(Collectors.toSet());
+		}
+
+		filteredByAtom.put(counter, currentFilter);
+	}
+	
+	/**
+	 * Takes in a query string of conditions, passes it to the getMatches method,
+	 * and analyzes the return of the method to provide a user with a reply.
+	 * 
+	 * @param query - request for restaurants that satisfy specific conditions
+	 * @return a string in JSON format of all the restaurants that
+	 * 		satisfy the query, returns ERR: NO_MATCH if there are no
+	 * 		restaurants that match, and returns ERR: INVALID_QUERY if
+	 * 		the query is not structured correctly
+	 */
+	public String parseQuery(String query) {
+		Set<T> matches = getMatches(query);
+		try {
+			if (matches.isEmpty())
+				return "ERR: NO_MATCH";
+			else {
+				String reply = "";
+				for (T business: matches) {
+					Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+					reply = reply.concat(gson.toJson(business));
+				}
+				return "Reply: " + reply;
+			}
+		} catch (NullPointerException e) {
+			return "ERR: INVALID_QUERY";
+		}
+	}
+	
 	
 	/**
 	 * Retrieves business_id -> Business map
@@ -133,6 +329,13 @@ public class YelpDB<T> implements MP5Db<T> {
 		return this.businessbyID;
 	}
 
+	/**
+	 * Retrieves information about a restaurant based on its businessID
+	 * 
+	 * @param businessID
+	 * @return Json formatted string representing restaurant information or error message
+	 * 			returns ERR: INVALID_RESTAURANT_STRING if the restaurant doesn't exist
+	 */
 	public String getRestaurant(String businessID) {
 		if (!businessbyID.containsKey(businessID))
 			return "ERR: INVALID_RESTAURANT_STRING";
@@ -141,13 +344,17 @@ public class YelpDB<T> implements MP5Db<T> {
 			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 			return "Reply: " + gson.toJson(restaurant);
 		}
-
 	}
-/**
- * REQUIRES REVIEW HAVE BUSINESS ID,USER ID, DATE, TEXT or returns ERR: INVALID_USER_STRING
- * @param line
- * @return
- */
+
+	/**
+	 * Adds a review using information given from Client input to database.
+	 * 
+	 * @param line
+	 * @requires review must have a businessID, userID, date, text
+	 * @return Json formatted string representing review information or error message
+	 * 			returns ERR: INVALID_REVIEW_STRING if information is missing
+	 * 			return ERR: NO_SUCH_REVIEW if no information is given
+	 */
 	public String addReview(String line) {
 		try {
 			Gson gson = new Gson();
@@ -163,11 +370,14 @@ public class YelpDB<T> implements MP5Db<T> {
 			return "ERR: NO_SUCH_REVIEW";
 		}
 	}
+	
 	/**
 	 * Adds a user using information given from Client input to database.
 	 * 
 	 * @param line
 	 * @return Json formatted string representing user information or error message
+	 * 			returns ERR: INVALID_USER_STRING if information is missing
+	 * 			return ERR: NO_SUCH_USER if no information is given
 	 */
 	public String addUser(String line) {
 		try {
@@ -185,13 +395,12 @@ public class YelpDB<T> implements MP5Db<T> {
 	/**
 	 * Adds a restaurant using information given from Client input to database.
 	 * 
-	 * ASSUMPTIONS: IF NO COORDINATES ARE GIVEN, THE DEFAULT VALUES ARE 0.0
-	 * REQUIRES RESTAURANT HAVE A BUSINESS ID, NAME, STATE, ADDRESS
 	 * @param line
+	 * @requires restaurant to have a name, state, address
+	 * 			ASSUMPTIONS: IF NO COORDINATES ARE GIVEN, THE DEFAULT VALUES ARE 0.0
 	 * @return Json formatted string representing restaurant information or error message
-	 * 
-	 * 			RETURNS ERR: NO_SUCH_RESTAURANT if no information is given
-	 * 			RETURNS ERR: INVALID_RESTAURANT_STRING if information is missing
+	 * 			returns ERR: NO_SUCH_RESTAURANT if no information is given
+	 * 			returns ERR: INVALID_RESTAURANT_STRING if information is missing
 	 */
 	public String addRestaurant(String line) {
 		try {
@@ -207,21 +416,18 @@ public class YelpDB<T> implements MP5Db<T> {
 		} catch (JsonSyntaxException c) {
 			return "ERR: INVALID_RESTAURANT_STRING";
 		}
-
 	}
 	
 	/**
-	 * Cluster objects into k clusters using k-means clustering
-	 * 
-	 * REP INVARIANT: businessesbyID is never null
+	 * Cluster objects into k clusters using k-means clustering			
 	 * 
 	 * @param k
 	 *            number of clusters to create (0 < k <= number of objects)
 	 *            requires k is not null 
+	 * @requires businessesbyID to not be null, and be already initialized
 	 * @return a String, in JSON format, that represents the clusters
 	 * @throws IOException 
 	 */
-	@Override
 	public String kMeansClusters_json(int k) {
 		double minX = Double.MAX_VALUE;
 		double maxX = -Double.MAX_VALUE;
@@ -395,15 +601,6 @@ public class YelpDB<T> implements MP5Db<T> {
 	}
 
 	/**
-	 * Returns map of each business to its cluseter, used for debugging kClusters
-	 * @return HashMap that has each Business (by name) mapped to its
-	 * 		cluster number
-	 */
-	public HashMap<String, Integer> getkMeans () {
-		return kMeansClusters;
-	}
-	
-	/**
 	 * Calculates squared distance between two Cartesian points
 	 * @param x1, y1
 	 * 				coordinates of a point (x1, y1), values are not null 
@@ -418,6 +615,15 @@ public class YelpDB<T> implements MP5Db<T> {
 		return Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
 	}
 
+	/**
+	 * Returns map of each business to its cluster, used for debugging kClusters
+	 * @return HashMap that has each Business (by name) mapped to its
+	 * 		cluster number
+	 */
+	public HashMap<String, Integer> getkMeans () {
+		return kMeansClusters;
+	}
+	
 	/**
 	 * Implements a least-squares linear regression to approximate
 	 * 		the relationship between price and rating of a restaurant.
@@ -499,12 +705,11 @@ public class YelpDB<T> implements MP5Db<T> {
 			} else {
 				Business restaurant = gson.fromJson(line, Business.class);
 				businessbyID.put(restaurant.getBusinessID(), restaurant);
+				businesses.add(restaurant);
 			}
 
 		}
 
 		br.close();
-
 	}
-
 }

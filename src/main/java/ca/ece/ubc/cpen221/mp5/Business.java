@@ -1,14 +1,12 @@
 package ca.ece.ubc.cpen221.mp5;
 
 import java.util.ArrayList;
-
 import com.google.gson.annotations.Expose;
 
 /**
  * Business - a datatype that represents a business.
  *
  */
-
 public class Business {
 	@Expose
 	private boolean open;
@@ -44,9 +42,6 @@ public class Business {
 	private double latitude;
 	@Expose
 	private int price;
-	
-	
-	
 	
 	/**
 	 * Business constructor initializes all characteristics of a business.
@@ -98,7 +93,6 @@ public class Business {
 	 * @return double array with coordinates[0] as latitude 
 	 *                       and coordinates[1] as longitude
 	 */
-	
 	public double[] getCoordinates() {
 		double[] coordinates = new double[2];
 		coordinates[0] = latitude;
@@ -123,6 +117,17 @@ public class Business {
 	 */
 	public String getName() {
 		return this.name;
+	}
+	
+	/**
+	 * Returns name of business, with any
+	 * spaces removed in the name.
+	 * 
+	 * @return neighbourhoods
+	 */
+	public String getFormattedName() {
+		String formattedName = this.name.replaceAll(" ", "");
+		return formattedName;
 	}
 	
 	/**
@@ -153,6 +158,21 @@ public class Business {
 	}
 	
 	/**
+	 * Returns neighbourhoods of business, with any
+	 * spaces removed in the neighbourhood names.
+	 * 
+	 * @return neighbourhoods
+	 */
+	public ArrayList<String> getFormattedNeighborhoods() {
+		ArrayList<String> formattedNeighbourhoods = new ArrayList<String> ();
+
+		for (String neighbourhood: neighborhoods) {
+			formattedNeighbourhoods.add(neighbourhood.replace(" ", ""));
+		}
+		return formattedNeighbourhoods;
+	}
+	
+	/**
 	 * Returns business id.
 	 * 
 	 * @return business id
@@ -162,12 +182,27 @@ public class Business {
 	}
 	
 	/**
-	 * Returns categories business falls under
+	 * Returns categories business falls under.
 	 * 
 	 * @return categories
 	 */
 	public ArrayList<String> getCategories() {
 		return this.categories;
+	}
+	
+	/**
+	 * Returns categories business falls under, with any
+	 * spaces removed in the category names.
+	 * 
+	 * @return categories
+	 */
+	public ArrayList<String> getFormattedCategories() {
+		ArrayList<String> formattedCategories = new ArrayList<String> ();
+		
+		for (String category: categories) {
+			formattedCategories.add(category.replace(" ", ""));
+		}
+		return formattedCategories;
 	}
 	
 	/**

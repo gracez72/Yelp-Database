@@ -39,25 +39,13 @@ public class GrammarBaseListener implements GrammarListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterAndexpr(GrammarParser.AndexprContext ctx) { }
+	@Override public void enterExpr(GrammarParser.ExprContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitAndexpr(GrammarParser.AndexprContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterOrexpr(GrammarParser.OrexprContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitOrexpr(GrammarParser.OrexprContext ctx) { }
+	@Override public void exitExpr(GrammarParser.ExprContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

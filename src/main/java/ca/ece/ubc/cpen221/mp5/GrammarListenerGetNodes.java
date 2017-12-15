@@ -99,7 +99,7 @@ public class GrammarListenerGetNodes extends GrammarBaseListener {
 	 * 		-an operation refers to the two most preceding integers
 	 * 			on the stack
 	 * 		-an operation refers to the two most preceding sets of
-	 * 			operation and operands
+	 * 			operation and operands on the stack
 	 * 
 	 * @return formatted stack of strings, where each entry is either
 	 * 			and integer that represents an atoms, or an operation

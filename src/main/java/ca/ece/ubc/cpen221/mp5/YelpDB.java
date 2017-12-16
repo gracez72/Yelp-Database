@@ -131,38 +131,42 @@ public class YelpDB<T> implements MP5Db<T> {
 			//Depending on the above conditions, the filtered sets are chosen
 			//and combined accordingly to form one large filtered set that
 			//satisfies the conditions.
-			if (operand.equals("||") && conditionOne == -1) {
-				tempFilteredSet.addAll(tempFilteredSets.pop());
-				tempFilteredSet.addAll(tempFilteredSets.pop());
-				tempFilteredSets.push(tempFilteredSet);
-			}
-			
-			else if (operand.equals("||")) {
-				tempFilteredSet.addAll(filteredByAtom.get(conditionOne));
-				tempFilteredSet.addAll(filteredByAtom.get(conditionTwo));
-				tempFilteredSets.push(tempFilteredSet);
-			}
-			
-			else if (operand.equals("&&") && conditionOne == -1) {
-				Set<Business> tempOne = new HashSet<Business> ();
-				tempOne.addAll(tempFilteredSets.pop());
-				Set<Business> tempTwo = new HashSet<Business> ();
-				tempTwo.addAll(tempFilteredSets.pop());
+			if (conditionOne == -1) {
+				if(operand.equals("||")) {
+					tempFilteredSet.addAll(tempFilteredSets.pop());
+					tempFilteredSet.addAll(tempFilteredSets.pop());
+					tempFilteredSets.push(tempFilteredSet);
+				}
 				
-				tempFilteredSet = tempOne.stream().filter(x -> tempTwo.contains(x)).collect(Collectors.toSet());
-				tempFilteredSet.addAll(tempTwo.stream().filter(x -> tempOne.contains(x)).collect(Collectors.toSet()));
-				tempFilteredSets.push(tempFilteredSet);
+				else {
+					Set<Business> tempOne = new HashSet<Business> ();
+					tempOne.addAll(tempFilteredSets.pop());
+					Set<Business> tempTwo = new HashSet<Business> ();
+					tempTwo.addAll(tempFilteredSets.pop());
+					
+					tempFilteredSet = tempOne.stream().filter(x -> tempTwo.contains(x)).collect(Collectors.toSet());
+					tempFilteredSet.addAll(tempTwo.stream().filter(x -> tempOne.contains(x)).collect(Collectors.toSet()));
+					tempFilteredSets.push(tempFilteredSet);
+				}
 			}
 			
 			else {
-				Set<Business> tempOne = new HashSet<Business> ();
-				tempOne.addAll(filteredByAtom.get(conditionOne));
-				Set<Business> tempTwo = new HashSet<Business> ();
-				tempTwo.addAll(filteredByAtom.get(conditionTwo));
+				if (operand.equals("||")) {
+					tempFilteredSet.addAll(filteredByAtom.get(conditionOne));
+					tempFilteredSet.addAll(filteredByAtom.get(conditionTwo));
+					tempFilteredSets.push(tempFilteredSet);
+				}
 				
-				tempFilteredSet = tempOne.stream().filter(x -> tempTwo.contains(x)).collect(Collectors.toSet());
-				tempFilteredSet.addAll(tempTwo.stream().filter(x -> tempOne.contains(x)).collect(Collectors.toSet()));
-				tempFilteredSets.push(tempFilteredSet);
+				else {
+					Set<Business> tempOne = new HashSet<Business> ();
+					tempOne.addAll(filteredByAtom.get(conditionOne));
+					Set<Business> tempTwo = new HashSet<Business> ();
+					tempTwo.addAll(filteredByAtom.get(conditionTwo));
+					
+					tempFilteredSet = tempOne.stream().filter(x -> tempTwo.contains(x)).collect(Collectors.toSet());
+					tempFilteredSet.addAll(tempTwo.stream().filter(x -> tempOne.contains(x)).collect(Collectors.toSet()));
+					tempFilteredSets.push(tempFilteredSet);
+				}
 			}
 		}
 		

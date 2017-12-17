@@ -29,7 +29,7 @@ public interface MP5Db<T> {
 	String kMeansClusters_json(int k);
 
 	/**
-	 * 
+	 * Predicts given user's ratings for objects in the database of type MP5DB.
 	 * @param user
 	 *            represents a user_id in the database
 	 * @return a function that predicts the user's ratings for objects (of type
@@ -39,5 +39,11 @@ public interface MP5Db<T> {
 	 */
 	ToDoubleBiFunction<MP5Db<T>, String> getPredictorFunction(String user);
 	
+	/**
+	 * Returns a hashmap mapping name to business. 
+	 * 
+	 * @return hashmap with Business name as key and 
+	 * the business object as value
+	 */
 	ConcurrentHashMap<String, Business> getBusinessbyID();
 }

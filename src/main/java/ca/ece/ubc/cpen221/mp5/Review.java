@@ -122,7 +122,8 @@ public class Review {
 	}
 	
 	/**
-	 * Returns unique hashcode 
+	 * Returns hashcode for given review object. 
+	 * Equal reviews area guaranteed to have the same hashcode.  
 	 * 
 	 * @return hashcode
 	 */

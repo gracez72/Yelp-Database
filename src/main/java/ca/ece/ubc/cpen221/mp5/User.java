@@ -197,6 +197,8 @@ public class User {
 
 	/**
 	 * Returns unique hashcode for each user.
+	 * User objects that are equal are guaranteed to 
+	 * have the same hashcode. 
 	 * 
 	 * @return hashcode
 	 */

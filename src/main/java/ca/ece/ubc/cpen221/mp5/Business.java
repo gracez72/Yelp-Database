@@ -290,6 +290,8 @@ public class Business {
 	
 	/**
 	 * Returns the hashcode of the Business.
+	 * Business objects that are equal are guaranteed to have the 
+	 * same hashcode.
 	 * 
 	 * @return hashcode 
 	 */

@@ -17,8 +17,8 @@ public class GrammarParser extends Parser {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, WORD=6, SPACE=7, NUM=8, OR=9, 
-		AND=10, LPAREN=11, RPAREN=12, EQ=13, LTE=14, LT=15, GT=16, GTE=17;
+		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, WORD=7, SPACE=8, NUM=9, 
+		OR=10, AND=11, LPAREN=12, RPAREN=13, EQ=14, LTE=15, LT=16, GT=17, GTE=18;
 	public static final int
 		RULE_query = 0, RULE_atom = 1, RULE_expr = 2, RULE_ineq = 3, RULE_in = 4, 
 		RULE_category = 5, RULE_name = 6, RULE_price = 7, RULE_rating = 8;
@@ -27,12 +27,13 @@ public class GrammarParser extends Parser {
 	};
 
 	private static final String[] _LITERAL_NAMES = {
-		null, "'in'", "'category'", "'name'", "'price'", "'rating'", null, null, 
-		null, "'||'", "'&&'", "'('", "')'", "'='", "'<='", "'<'", "'>'", "'>='"
+		null, "'in'", "'&'", "'category'", "'name'", "'price'", "'rating'", null, 
+		null, null, "'||'", "'&&'", "'('", "')'", "'='", "'<='", "'<'", "'>'", 
+		"'>='"
 	};
 	private static final String[] _SYMBOLIC_NAMES = {
-		null, null, null, null, null, null, "WORD", "SPACE", "NUM", "OR", "AND", 
-		"LPAREN", "RPAREN", "EQ", "LTE", "LT", "GT", "GTE"
+		null, null, null, null, null, null, null, "WORD", "SPACE", "NUM", "OR", 
+		"AND", "LPAREN", "RPAREN", "EQ", "LTE", "LT", "GT", "GTE"
 	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
@@ -120,7 +121,7 @@ public class GrammarParser extends Parser {
 			setState(22);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__0) | (1L << T__1) | (1L << T__2) | (1L << T__3) | (1L << T__4) | (1L << LPAREN))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__0) | (1L << T__2) | (1L << T__3) | (1L << T__4) | (1L << T__5) | (1L << LPAREN))) != 0)) {
 				{
 				setState(20);
 				switch ( getInterpreter().adaptivePredict(_input,0,_ctx) ) {
@@ -203,28 +204,28 @@ public class GrammarParser extends Parser {
 				in();
 				}
 				break;
-			case T__1:
+			case T__2:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(26);
 				category();
 				}
 				break;
-			case T__4:
+			case T__5:
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(27);
 				rating();
 				}
 				break;
-			case T__3:
+			case T__4:
 				enterOuterAlt(_localctx, 4);
 				{
 				setState(28);
 				price();
 				}
 				break;
-			case T__2:
+			case T__3:
 				enterOuterAlt(_localctx, 5);
 				{
 				setState(29);
@@ -417,12 +418,12 @@ public class GrammarParser extends Parser {
 			setState(51);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==WORD || _la==NUM) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__1) | (1L << WORD) | (1L << NUM))) != 0)) {
 				{
 				{
 				setState(48);
 				_la = _input.LA(1);
-				if ( !(_la==WORD || _la==NUM) ) {
+				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__1) | (1L << WORD) | (1L << NUM))) != 0)) ) {
 				_errHandler.recoverInline(this);
 				} else {
 					consume();
@@ -477,17 +478,22 @@ public class GrammarParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(56);
-			match(T__1);
+			match(T__2);
 			setState(57);
 			match(LPAREN);
 			setState(61);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==WORD) {
+			while (_la==T__1 || _la==WORD) {
 				{
 				{
 				setState(58);
-				match(WORD);
+				_la = _input.LA(1);
+				if ( !(_la==T__1 || _la==WORD) ) {
+				_errHandler.recoverInline(this);
+				} else {
+					consume();
+				}
 				}
 				}
 				setState(63);
@@ -542,18 +548,18 @@ public class GrammarParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(66);
-			match(T__2);
+			match(T__3);
 			setState(67);
 			match(LPAREN);
 			setState(71);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==WORD || _la==NUM) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__1) | (1L << WORD) | (1L << NUM))) != 0)) {
 				{
 				{
 				setState(68);
 				_la = _input.LA(1);
-				if ( !(_la==WORD || _la==NUM) ) {
+				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__1) | (1L << WORD) | (1L << NUM))) != 0)) ) {
 				_errHandler.recoverInline(this);
 				} else {
 					consume();
@@ -605,7 +611,7 @@ public class GrammarParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(76);
-			match(T__3);
+			match(T__4);
 			setState(77);
 			ineq();
 			setState(78);
@@ -649,7 +655,7 @@ public class GrammarParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(80);
-			match(T__4);
+			match(T__5);
 			setState(81);
 			ineq();
 			setState(82);
@@ -668,28 +674,28 @@ public class GrammarParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\23W\4\2\t\2\4\3\t"+
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\24W\4\2\t\2\4\3\t"+
 		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\3\2\3\2\7\2"+
 		"\27\n\2\f\2\16\2\32\13\2\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\5\3%\n\3"+
 		"\3\4\3\4\3\4\7\4*\n\4\f\4\16\4-\13\4\3\5\3\5\3\6\3\6\3\6\7\6\64\n\6\f"+
 		"\6\16\6\67\13\6\3\6\3\6\3\7\3\7\3\7\7\7>\n\7\f\7\16\7A\13\7\3\7\3\7\3"+
 		"\b\3\b\3\b\7\bH\n\b\f\b\16\bK\13\b\3\b\3\b\3\t\3\t\3\t\3\t\3\n\3\n\3\n"+
-		"\3\n\3\n\2\2\13\2\4\6\b\n\f\16\20\22\2\5\3\2\13\f\3\2\17\23\4\2\b\b\n"+
-		"\nX\2\30\3\2\2\2\4$\3\2\2\2\6&\3\2\2\2\b.\3\2\2\2\n\60\3\2\2\2\f:\3\2"+
-		"\2\2\16D\3\2\2\2\20N\3\2\2\2\22R\3\2\2\2\24\27\5\4\3\2\25\27\5\6\4\2\26"+
-		"\24\3\2\2\2\26\25\3\2\2\2\27\32\3\2\2\2\30\26\3\2\2\2\30\31\3\2\2\2\31"+
-		"\3\3\2\2\2\32\30\3\2\2\2\33%\5\n\6\2\34%\5\f\7\2\35%\5\22\n\2\36%\5\20"+
-		"\t\2\37%\5\16\b\2 !\7\r\2\2!\"\5\6\4\2\"#\7\16\2\2#%\3\2\2\2$\33\3\2\2"+
-		"\2$\34\3\2\2\2$\35\3\2\2\2$\36\3\2\2\2$\37\3\2\2\2$ \3\2\2\2%\5\3\2\2"+
-		"\2&+\5\4\3\2\'(\t\2\2\2(*\5\4\3\2)\'\3\2\2\2*-\3\2\2\2+)\3\2\2\2+,\3\2"+
-		"\2\2,\7\3\2\2\2-+\3\2\2\2./\t\3\2\2/\t\3\2\2\2\60\61\7\3\2\2\61\65\7\r"+
-		"\2\2\62\64\t\4\2\2\63\62\3\2\2\2\64\67\3\2\2\2\65\63\3\2\2\2\65\66\3\2"+
-		"\2\2\668\3\2\2\2\67\65\3\2\2\289\7\16\2\29\13\3\2\2\2:;\7\4\2\2;?\7\r"+
-		"\2\2<>\7\b\2\2=<\3\2\2\2>A\3\2\2\2?=\3\2\2\2?@\3\2\2\2@B\3\2\2\2A?\3\2"+
-		"\2\2BC\7\16\2\2C\r\3\2\2\2DE\7\5\2\2EI\7\r\2\2FH\t\4\2\2GF\3\2\2\2HK\3"+
-		"\2\2\2IG\3\2\2\2IJ\3\2\2\2JL\3\2\2\2KI\3\2\2\2LM\7\16\2\2M\17\3\2\2\2"+
-		"NO\7\6\2\2OP\5\b\5\2PQ\7\n\2\2Q\21\3\2\2\2RS\7\7\2\2ST\5\b\5\2TU\7\n\2"+
-		"\2U\23\3\2\2\2\t\26\30$+\65?I";
+		"\3\n\3\n\2\2\13\2\4\6\b\n\f\16\20\22\2\6\3\2\f\r\3\2\20\24\5\2\4\4\t\t"+
+		"\13\13\4\2\4\4\t\tX\2\30\3\2\2\2\4$\3\2\2\2\6&\3\2\2\2\b.\3\2\2\2\n\60"+
+		"\3\2\2\2\f:\3\2\2\2\16D\3\2\2\2\20N\3\2\2\2\22R\3\2\2\2\24\27\5\4\3\2"+
+		"\25\27\5\6\4\2\26\24\3\2\2\2\26\25\3\2\2\2\27\32\3\2\2\2\30\26\3\2\2\2"+
+		"\30\31\3\2\2\2\31\3\3\2\2\2\32\30\3\2\2\2\33%\5\n\6\2\34%\5\f\7\2\35%"+
+		"\5\22\n\2\36%\5\20\t\2\37%\5\16\b\2 !\7\16\2\2!\"\5\6\4\2\"#\7\17\2\2"+
+		"#%\3\2\2\2$\33\3\2\2\2$\34\3\2\2\2$\35\3\2\2\2$\36\3\2\2\2$\37\3\2\2\2"+
+		"$ \3\2\2\2%\5\3\2\2\2&+\5\4\3\2\'(\t\2\2\2(*\5\4\3\2)\'\3\2\2\2*-\3\2"+
+		"\2\2+)\3\2\2\2+,\3\2\2\2,\7\3\2\2\2-+\3\2\2\2./\t\3\2\2/\t\3\2\2\2\60"+
+		"\61\7\3\2\2\61\65\7\16\2\2\62\64\t\4\2\2\63\62\3\2\2\2\64\67\3\2\2\2\65"+
+		"\63\3\2\2\2\65\66\3\2\2\2\668\3\2\2\2\67\65\3\2\2\289\7\17\2\29\13\3\2"+
+		"\2\2:;\7\5\2\2;?\7\16\2\2<>\t\5\2\2=<\3\2\2\2>A\3\2\2\2?=\3\2\2\2?@\3"+
+		"\2\2\2@B\3\2\2\2A?\3\2\2\2BC\7\17\2\2C\r\3\2\2\2DE\7\6\2\2EI\7\16\2\2"+
+		"FH\t\4\2\2GF\3\2\2\2HK\3\2\2\2IG\3\2\2\2IJ\3\2\2\2JL\3\2\2\2KI\3\2\2\2"+
+		"LM\7\17\2\2M\17\3\2\2\2NO\7\7\2\2OP\5\b\5\2PQ\7\13\2\2Q\21\3\2\2\2RS\7"+
+		"\b\2\2ST\5\b\5\2TU\7\13\2\2U\23\3\2\2\2\t\26\30$+\65?I";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

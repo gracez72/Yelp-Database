@@ -17,7 +17,8 @@ import ca.ece.ubc.cpen221.mp5.YelpDBClient;
 import ca.ece.ubc.cpen221.mp5.YelpDBServer;
 
 public class DatabaseTests {
-	// BUSINESS CLASS TEST
+	
+	//BUSINESS CLASS TEST
 	@Test
 	public void test0() throws IOException {
 		Business b1 = new Business("https://google.com", "Hi", "135gws", 124.4, 167.3, 4,
@@ -41,7 +42,8 @@ public class DatabaseTests {
 		assertTrue(b1.equals(r1));
 	}
 
-	// REVIEW CLASS TEST
+	
+	//REVIEW CLASS TEST
 	@Test 
 	public void test2() throws IOException {
 		Review r1 = new Review("aeg9", 3.5, "aeraeg9", "review", new HashMap<String, Integer>(),
@@ -51,12 +53,10 @@ public class DatabaseTests {
 		assertTrue(r1.getVotes().isEmpty());
 		assertTrue(r1.hashCode() != r2.hashCode());
 		assertTrue(!r1.equals(r2));
-		
-		
 	}
 	
 
-	// USER TESTS
+	//USER TESTS
 	@Test
 	public void test3() throws IOException {
 		User u1 = new User("Bob");
@@ -79,8 +79,8 @@ public class DatabaseTests {
 		assertTrue(u3.getReviewCount() == 5);
 	}
 
+	
 	// Multithreaded YelpDBServer and YelpDBClient Test
-
 	@Test
 	public void test4() throws IOException {
 		String[] start = { "4949" };
@@ -307,7 +307,7 @@ public class DatabaseTests {
 					assertTrue(result.equals(
 							"Reply: {\"type\":\"review\",\"business_id\":\"1CBs84C-a-cuA3vncXVSAw\",\"votes\":{\"cool\":0,\"useful\":0,\"funny\":0},\"review_id\":\"1CBs84C-a-cuA3vncXVSAw4.01032624752\",\"text\":\"Extra Large Athenian for pick-up please!!!!\\n\\nI wish they delivered to downtown Oakland.\",\"stars\":4.0,\"user_id\":\"MY9ht7Fw_ER3dJ7baYjcxw\",\"date\":\"2011-09-28\"}"));
 
-					// MISSING TYPE
+					//missing type
 					client3.sendRequest(
 							"ADDREVIEW {\"business_id\": \"1CBs84C-a-cuA3vncXVSAw\", \"votes\": {\"cool\": 0, \"useful\": 0, \"funny\": 0}, \"review_id\": \"DG8LX-iRbWlrcoiIOVW-Bw\", \"text\": \"Extra Large Athenian for pick-up please!!!!\\n\\nI wish they delivered to downtown Oakland.\", \"stars\": 4, \"user_id\": \"MY9ht7Fw_ER3dJ7baYjcxw\", \"date\": \"2011-09-28\"}");
 					y = client3.getReply();
@@ -315,15 +315,13 @@ public class DatabaseTests {
 					assertTrue(result.equals(
 							"Reply: {\"business_id\":\"1CBs84C-a-cuA3vncXVSAw\",\"votes\":{\"cool\":0,\"useful\":0,\"funny\":0},\"review_id\":\"DG8LX-iRbWlrcoiIOVW-Bw\",\"text\":\"Extra Large Athenian for pick-up please!!!!\\n\\nI wish they delivered to downtown Oakland.\",\"stars\":4.0,\"user_id\":\"MY9ht7Fw_ER3dJ7baYjcxw\",\"date\":\"2011-09-28\"}")); 
 
-					// missing votes
+					//missing votes
 					client3.sendRequest(
 							"ADDREVIEW {\"type\": \"review\", \"business_id\": \"1CBs84C-a-cuA3vncXVSAw\", \"review_id\": \"DG8LX-iRbWlrcoiIOVW-Bw\", \"text\": \"Extra Large Athenian for pick-up please!!!!\\n\\nI wish they delivered to downtown Oakland.\", \"stars\": 4, \"user_id\": \"MY9ht7Fw_ER3dJ7baYjcxw\", \"date\": \"2011-09-28\"}");
 					y = client3.getReply();
 					result = y;
 					assertTrue(result.equals(
 							"Reply: {\"type\":\"review\",\"business_id\":\"1CBs84C-a-cuA3vncXVSAw\",\"review_id\":\"DG8LX-iRbWlrcoiIOVW-Bw\",\"text\":\"Extra Large Athenian for pick-up please!!!!\\n\\nI wish they delivered to downtown Oakland.\",\"stars\":4.0,\"user_id\":\"MY9ht7Fw_ER3dJ7baYjcxw\",\"date\":\"2011-09-28\"}"));
-
-					
 					
 					client3.sendRequest(
 							"ADDREVIEW {\"type\": \"review\", \"votes\": {\"cool\": 0, \"useful\": 0, \"funny\": 0}, \"review_id\": \"DG8LX-iRbWlrcoiIOVW-Bw\", \"text\": \"Extra Large Athenian for pick-up please!!!!\\n\\nI wish they delivered to downtown Oakland.\", \"stars\": 4, \"user_id\": \"MY9ht7Fw_ER3dJ7baYjcxw\", \"date\": \"2011-09-28\"}");
@@ -331,6 +329,24 @@ public class DatabaseTests {
 					result = y;
 					assertTrue(result.equals("ERR: INVALID_REVIEW_STRING"));
 
+					//normal query request
+					client3.sendRequest("QUERY in(Telegraph Ave) && category(Thai) && price < 2 && rating >= 3");
+					y = client3.getReply();
+					result = y;
+					assertTrue(result.equals("Reply: {\"open\":true,\"url\":\"http://www.yelp.com/biz/satay-house-berkeley\",\"longitude\":-122.2580885,\"neighborhoods\":[\"Telegraph Ave\",\"UC Campus Area\"],\"business_id\":\"zzFi7Z-pejLJtyg-SiGI5g\",\"name\":\"Satay House\",\"categories\":[\"Thai\",\"Restaurants\"],\"state\":\"CA\",\"type\":\"business\",\"stars\":4.0,\"city\":\"Berkeley\",\"full_address\":\"2519 Durant Ave\\nSte B\\nTelegraph Ave\\nBerkeley, CA 94704\",\"review_count\":6,\"photo_url\":\"http://s3-media3.ak.yelpcdn.com/bphoto/jRjjXhEPK_sPNQ7N4x4ytw/ms.jpg\",\"schools\":[\"University of California at Berkeley\"],\"latitude\":37.868144,\"price\":1}"));
+					
+					//incorrectly formatted request
+					client3.sendRequest("QUERY in(Telegraph Ave) &&& (()category(Thai)3");
+					y = client3.getReply();
+					result = y;
+					assertTrue(result.equals("ERR: INVALID_QUERY"));
+					
+					//no match request
+					client3.sendRequest("QUERY price > 5");
+					y = client3.getReply();
+					result = y;
+					assertTrue(result.equals("ERR: NO_MATCH"));
+					
 					client3.close();
 
 				} catch (IOException ioe) {
@@ -352,13 +368,15 @@ public class DatabaseTests {
 
 	}
 
-	// GETPREDICTORFUNCTION TESTS
+	
+	//GETPREDICTORFUNCTION TESTS
 	@Test
 	public void test5() throws IOException {
 		YelpDB<Restaurant> db = new YelpDB<Restaurant>(
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmrj7dY1Pdd95BOvsHOmgv_0FVvNlks5aPZ3VwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmuBfUMElSR1iYoHVMe7WawLvsXjeks5aPZ3owA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmvzZNCnePcmIsWPRO6rjNipdYDVlks5aPZ34wA%3D%3D");
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmjZ_YWpcWIvOzbrOfWXmGoDUlsKyks5aPwj0wA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rml_dvSV_hatl9cu4zlfSDpvhe5p5ks5aPwkFwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmhziGHNofZMAYY1yOet3dxLFUKveks5aPwkWwA%3D%3D");
+
 		assertTrue(
 				db.getPredictorFunction("_NH7Cpq3qZkByP5xR4gXog").applyAsDouble(db, "fcdjnsgO8Z5LthXUx3y-lA") == 4.0);
 
@@ -369,12 +387,16 @@ public class DatabaseTests {
 				"1wz7l5OyVoUlvPDRy59ZMA") == 3.857142857142857);
 	}
 	
-	@Test
-	public void testKClusterSmall() throws IOException {
-		YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurantsSmaller.json?token=AYhesUPTxCuDh5TS06jJweMvyxZLFtLjks5aKmHKwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
-	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
-		
+	
+	//KCLUSTERS TESTS
+		//Testing KClusters with a small set of restaurants
+	@Test 
+	public void test6() throws IOException {
+		YelpDB<Restaurant> db = new YelpDB<Restaurant>(
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurantsSmaller.json?token=Ad5rmsSAKcA98t1qPDEwV2OmPOC00UJLks5aP07kwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rml_dvSV_hatl9cu4zlfSDpvhe5p5ks5aPwkFwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmhziGHNofZMAYY1yOet3dxLFUKveks5aPwkWwA%3D%3D");
+
 		db.kMeansClusters_json(2);
 		HashMap<String, Integer> answerTwoClusters = new HashMap<String, Integer> ();
 		answerTwoClusters = db.getkMeans();
@@ -386,12 +408,14 @@ public class DatabaseTests {
 		assertTrue(answerFourClusters.get("Cafe 3").equals(answerFourClusters.get("Jasmine Thai")));	
 	}
 	
+		//Testing KClusters with a full set of restaurants
 	@Test
-	public void testKClusterLarge() throws IOException {
-		YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=AYheschrw2ihIQQvQBzUzGgogu3ARExTks5aKmkXwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rmtqKeZTfXUn11R35DZcTczpgqLc4ks5aIm_WwA%3D%3D",
-	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmsox3KwRPuEEBRwJq6p-rHsUg5mmks5aIm_DwA%3D%3D");
-		
+	public void test7() throws IOException {
+		YelpDB<Restaurant> db = new YelpDB<Restaurant>(
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmjZ_YWpcWIvOzbrOfWXmGoDUlsKyks5aPwj0wA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rml_dvSV_hatl9cu4zlfSDpvhe5p5ks5aPwkFwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmhziGHNofZMAYY1yOet3dxLFUKveks5aPwkWwA%3D%3D");
+
 		db.kMeansClusters_json(5);
 		HashMap<String, Integer> answerFiveClusters = new HashMap<String, Integer> ();
 		answerFiveClusters = db.getkMeans();
@@ -405,12 +429,16 @@ public class DatabaseTests {
 		assertTrue(answerTwentyClusters.get("The Melt Berkeley").equals(answerTwentyClusters.get("Gordo Taqueria")));	
 	}
 	
+	
+	//STRUCTURED QUERIES TESTS
+		//Testing getMatches with a small set of restaurants
 	@Test
-	public void testGetMatchesSmall() throws IOException {
-		YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurantsSmaller.json?token=AYhescewn5kjXmSswpYaze-iXwsZQk-Uks5aNbzwwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=AYhesRUHOgcY1NVhTFilUqMiz0izryWBks5aNbyiwA%3D%3D",
-	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=AYhesaLhK6P4cF_iKOPX1qvQzKq5vDZPks5aNbyEwA%3D%3D");
-				
+	public void test8() throws IOException {
+		YelpDB<Restaurant> db = new YelpDB<Restaurant>(
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurantsSmaller.json?token=Ad5rmsSAKcA98t1qPDEwV2OmPOC00UJLks5aP07kwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rml_dvSV_hatl9cu4zlfSDpvhe5p5ks5aPwkFwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmhziGHNofZMAYY1yOet3dxLFUKveks5aPwkWwA%3D%3D");
+	
 		String query = "(price < 3 && price > 1)";
 		assertEquals(7, db.getMatches(query).size());
 		
@@ -420,7 +448,7 @@ public class DatabaseTests {
 		query = "(category(Indian) || category(Chinese)) || in(UC Campus Area)";
 		assertEquals(10, db.getMatches(query).size());
 		
-		query = "name(Jasmine Thai)";
+		query = "name(Pho K & K)";
 		assertEquals(1, db.getMatches(query).size());
 		
 		query = "(price <= 5 && rating > 3) && in(Telegraph Ave) && category(Chinese)";
@@ -453,12 +481,14 @@ public class DatabaseTests {
 		}
 	}
 	
+		//Testing getMatches with a full set of restaurants
 	@Test
-	public void testGetMatchesLarge() throws IOException {
-		YelpDB<Restaurant> db = new YelpDB<Restaurant>("https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=AYhesc_qFfKdIAjWV_nu5FRXHHhneyP2ks5aNbeXwA%3D%3D",
-				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=AYhesRUHOgcY1NVhTFilUqMiz0izryWBks5aNbyiwA%3D%3D",
-	             "https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=AYhesaLhK6P4cF_iKOPX1qvQzKq5vDZPks5aNbyEwA%3D%3D");
-				
+	public void test9() throws IOException {
+		YelpDB<Restaurant> db = new YelpDB<Restaurant>(
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/restaurants.json?token=Ad5rmjZ_YWpcWIvOzbrOfWXmGoDUlsKyks5aPwj0wA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/users.json?token=Ad5rml_dvSV_hatl9cu4zlfSDpvhe5p5ks5aPwkFwA%3D%3D",
+				"https://raw.githubusercontent.com/CPEN-221/f17-mp51-gracez72_andradazoltan/master/data/reviews.json?token=Ad5rmhziGHNofZMAYY1yOet3dxLFUKveks5aPwkWwA%3D%3D");
+		
 		String query = "(price < 3 && price > 1)";
 		assertEquals(61, db.getMatches(query).size());
 		

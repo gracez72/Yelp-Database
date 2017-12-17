@@ -99,7 +99,7 @@ public class YelpDB<T> implements MP5Db<T> {
 		//Map of each of the different requests in the query, mapped to a unique integer.
 		Map<Integer, String> atoms = listener.getAtoms();
 		
-		//Concurrrently creates another map (private field) that maps a set of business
+		//Concurrently creates another map (private field) that maps a set of business
 		//objects satisfying a condition (atom) to the same integer that that condition is 
 		//mapped to.
 		filteredByAtom.clear();

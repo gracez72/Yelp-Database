@@ -163,17 +163,17 @@ public class DatabaseTests {
 					client.sendRequest("ADDUSER {null}");
 					y = client.getReply();
 					result = y;
-					assertTrue(result.equals("ERR: NO_SUCH_USER"));
+					assertTrue(("ERR: NO_SUCH_USER").equals(result));
 
 					client.sendRequest("ADDREVIEW");
 					y = client.getReply();
 					result = y;
-					assertTrue(result.equals("ERR: ILLEGAL_REQUEST"));
+					assertTrue(("ERR: ILLEGAL_REQUEST").equals(result));
 
 					client.sendRequest("ADDREVIEW null");
 					y = client.getReply();
 					result = y;
-					assertTrue(result.equals("ERR: NO_SUCH_REVIEW"));
+					assertTrue(("ERR: NO_SUCH_REVIEW").equals(result));
 					
 
 					client.close();
@@ -220,14 +220,14 @@ public class DatabaseTests {
 							"ADDRESTAURANT {\"url\":\"http://www.yelp.com/biz/bearsandcats-ramen-house-berkeley\",\"longitude\":-122.2580151,\"latitude\":37.8680531,\"price\":2,\"stars\":0.0,\"open\":true,\"type\":\"business\",\"state\":\"CA\",\"city\":\"Berkeley\",\"full_address\":\"2521 Durant Ave\\nTelegraph Ave\\nBerkeley, CA 94701\",\"photo_url\":\"http://s3-media2.ak.yelpcdn.com/bphoto/BFEn7l4opMgRDeZ6ak7rcQ/ms.jpg\",\"schools\":[\"University of California at Berkeley\"],\"review_count\":225,\"categories\":[\"Korean\",\"Restaurants\"]}");
 					y = client2.getReply();
 					result = y;
-					assertTrue(result.equals("ERR: INVALID_RESTAURANT_STRING"));
+					assertTrue(("ERR: INVALID_RESTAURANT_STRING").equals(result));
 
 					// no state
 					client2.sendRequest(
 							"ADDRESTAURANT {\"url\":\"http://www.yelp.com/biz/bearsandcats-ramen-house-berkeley\",\"business_id\":\"1384591796Bear and Cat\\u0027s Ramen House37.8680531-122.2580151\",\"longitude\":-122.2580151,\"latitude\":37.8680531,\"price\":2,\"stars\":0.0,\"open\":true,\"type\":\"business\",\"city\":\"Berkeley\",\"full_address\":\"2521 Durant Ave\\nTelegraph Ave\\nBerkeley, CA 94701\",\"photo_url\":\"http://s3-media2.ak.yelpcdn.com/bphoto/BFEn7l4opMgRDeZ6ak7rcQ/ms.jpg\",\"schools\":[\"University of California at Berkeley\"],\"review_count\":225,\"categories\":[\"Korean\",\"Restaurants\"]}");
 					y = client2.getReply();
 					result = y;
-					assertTrue(result.equals("ERR: INVALID_RESTAURANT_STRING"));
+					assertTrue(("ERR: INVALID_RESTAURANT_STRING").equals(result));
 
 					client2.sendRequest("GETRESTAURANT HXni0_SFPT1jAoH-Sm78Jg");
 					y = client2.getReply();
@@ -238,12 +238,12 @@ public class DatabaseTests {
 					client2.sendRequest("end");
 					y = client2.getReply();
 					result = y;
-					assertTrue(result.equals("Closing client..."));
+					assertTrue(("Closing client...").equals(result));
 
 					client2.sendRequest("ADDRESTAURANT NULL");
 					y = client2.getReply();
 					result = y;
-					assertTrue(result.equals("ERR: NO_SUCH_RESTAURANT"));
+					assertTrue(("ERR: NO_SUCH_RESTAURANT").equals(result));
 
 					client2.close();
 
